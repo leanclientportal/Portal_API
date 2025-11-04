@@ -1,0 +1,53 @@
+const express = require('express');
+const {
+  getTasks,
+  createTask,
+  updateTask,
+  deleteTask
+} = require('../controllers/taskController');
+const {
+  validate,
+  validateQuery,
+  validateParams,
+  validationSchemas,
+  objectIdSchema
+} = require('../middlewares/validation');
+const Joi = require('joi');
+
+const router = express.Router();
+
+const paramSchemaList = Joi.object({
+  projectId: objectIdSchema.required()
+});
+
+const paramSchemaDetail = Joi.object({
+  projectId: objectIdSchema.required(),
+  taskId: objectIdSchema.required()
+});
+
+const taskListQuery = validationSchemas.pagination.keys({
+  status: Joi.string().valid('todo', 'in-progress', 'in-review', 'completed', 'cancelled'),
+  visibleToClient: Joi.boolean()
+});
+
+router.route('/:projectId')
+  .get(
+    validateParams(paramSchemaList),
+    validateQuery(taskListQuery),
+    getTasks
+  )
+  .post(
+    validateParams(paramSchemaList),
+    validate(validationSchemas.task.create),
+    createTask
+  );
+
+router.route('/:projectId/:taskId')
+  .put(
+    validateParams(paramSchemaDetail),
+    validate(validationSchemas.task.update),
+    updateTask
+  )
+  .delete(validateParams(paramSchemaDetail), deleteTask);
+
+module.exports = router;
