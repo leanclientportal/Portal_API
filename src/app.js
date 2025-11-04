@@ -151,7 +151,7 @@ app.all('*', (req, res) => {
 // Error handling middleware (must be last)
 app.use(errorHandler);
 
-const PORT = process.env.PORT || 3000;
+const PORT = process.env.PORT || 3009;
 
 const server = app.listen(PORT, () => {
   console.log(`🚀 Lean Client Portal API server running on port ${PORT}`);
@@ -176,4 +176,9 @@ process.on('uncaughtException', (err) => {
   process.exit(1);
 });
 
+require('dotenv').config({ path: `.env.${process.env.NODE_ENV}` });
+app.listen(PORT, () => {
+  logger.info(`Server running on port ${PORT}`);
+  logger.info(`Environment: ${process.env.PORT}`);
+});
 module.exports = app;
