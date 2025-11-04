@@ -4,7 +4,7 @@
   "description": "Backend REST API for Lean Client Portal",
   "main": "src/app.js",
   "scripts": {
-    "start": "PORT=3000 node src/app.js",
+    "start": "node src/app.js",
     "dev": "nodemon src/app.js",
     "test": "jest"
   },
