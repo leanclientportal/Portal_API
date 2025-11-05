@@ -19,7 +19,7 @@ const projectRoutes = require('./routes/projectRoutes');
 const taskRoutes = require('./routes/taskRoutes');
 const invoiceRoutes = require('./routes/invoiceRoutes');
 const documentRoutes = require('./routes/documentRoutes');
-
+const config = require('./config');
 // Swagger documentation
 const { swaggerUi, specs } = require('./config/swagger');
 
@@ -176,9 +176,4 @@ process.on('uncaughtException', (err) => {
   process.exit(1);
 });
 
-require('dotenv').config({ path: `.env.${process.env.NODE_ENV}` });
-app.listen(PORT, () => {
-  logger.info(`Server running on port ${PORT}`);
-  logger.info(`Environment: ${process.env.PORT}`);
-});
 module.exports = app;
