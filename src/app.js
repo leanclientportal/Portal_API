@@ -12,7 +12,7 @@ const connectDB = require('./config/database');
 const errorHandler = require('./middlewares/errorHandler');
 
 // Route imports
-const authRoutes = require('./routes/authRoutes');
+const userAuthRoutes = require('./routes/userAuthRoutes');
 const tenantRoutes = require('./routes/tenantRoutes');
 const clientRoutes = require('./routes/clientRoutes');
 const projectRoutes = require('./routes/projectRoutes');
@@ -98,7 +98,7 @@ app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(specs, {
 }));
 
 // Mount routes
-app.use(`${API_VERSION}/auth`, authRoutes);
+app.use(`${API_VERSION}/auth`, userAuthRoutes);
 app.use(`${API_VERSION}/tenant`, tenantRoutes);
 app.use(`${API_VERSION}/clients`, clientRoutes);
 app.use(`${API_VERSION}/projects`, projectRoutes);

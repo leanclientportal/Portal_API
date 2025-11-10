@@ -85,13 +85,7 @@ exports.verifyOtp = asyncHandler(async (req, res) => {
 
 // Step 3: Complete registration after OTP verification
 exports.register = asyncHandler(async (req, res) => {
-  const { email, phone, password, otp } = req.body;
-
-  // Re-verify OTP as a security measure
-  const otpData = await Otp.findOne({ identifier: email, otp });
-  if (!otpData) {
-    return res.status(400).json({ message: 'Invalid or expired OTP. Please try again.' });
-  }
+  const { email, password } = req.body;
 
   // Check if user already exists (edge case)
   const userExists = await User.findOne({ email });
@@ -101,7 +95,6 @@ exports.register = asyncHandler(async (req, res) => {
 
   const newUser = new User({
     email,
-    phone,
     credential: { password }
   });
 

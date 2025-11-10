@@ -10,6 +10,8 @@ const {
 const { validate } = require('../middlewares/validation');
 const { body } = require('express-validator');
 
+// These routes are now open and do not require authentication
+
 // Step 1: Send OTP for registration
 router.post('/send-otp',
   [
@@ -50,7 +52,8 @@ router.post('/login',
   login
 );
 
-// Logout a user
-router.post('/logout', logout);
+// Logout a user (requires authentication)
+const { protect } = require('../middlewares/auth');
+router.post('/logout', protect, logout);
 
 module.exports = router;
