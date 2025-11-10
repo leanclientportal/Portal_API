@@ -19,7 +19,6 @@ const projectRoutes = require('./routes/projectRoutes');
 const taskRoutes = require('./routes/taskRoutes');
 const invoiceRoutes = require('./routes/invoiceRoutes');
 const documentRoutes = require('./routes/documentRoutes');
-const config = require('./config');
 // Swagger documentation
 const { swaggerUi, specs } = require('./config/swagger');
 

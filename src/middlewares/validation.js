@@ -191,15 +191,21 @@ const validationSchemas = {
 
   // Auth validation
   auth: {
+    sendOtp: Joi.object({
+      email: Joi.string().email().required().messages({ 'string.email': 'Enter a valid email' })
+    }),
+    verifyOtp: Joi.object({
+      email: Joi.string().email().required().messages({ 'string.email': 'Enter a valid email' }),
+      otp: Joi.string().length(6).required().messages({ 'string.length': 'Enter a valid 6-digit OTP' })
+    }),
     register: Joi.object({
-      name: Joi.string().required().min(2).max(200),
-      email: Joi.string().email().required(),
-      password: Joi.string().required().min(6),
-      phone: Joi.string().min(7).max(20)
+      email: Joi.string().email().required().messages({ 'string.email': 'Enter a valid email' }),
+      phone: Joi.string().optional(),
+      password: Joi.string().min(6).required().messages({ 'string.min': 'Password must be at least 6 characters long' })
     }),
     login: Joi.object({
-      email: Joi.string().email().required(),
-      password: Joi.string().required()
+      login: Joi.string().required().messages({ 'any.required': 'Enter email or phone number' }),
+      password: Joi.string().required().messages({ 'any.required': 'Enter password' })
     }),
     updateDetails: Joi.object({
       name: Joi.string().min(2).max(200),

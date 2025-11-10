@@ -5,10 +5,10 @@ module.exports = {
   TWILIO_PHONE_NUMBER: 'your-twilio-phone-number',
 
   // Gmail configuration
-  GMAIL_USER: 'your-email@gmail.com',
-  GMAIL_PASS: 'your-password',
+  GMAIL_USER: 'leanclientportal@gmail.com',
+  GMAIL_PASS: 'Pa$$Word@123',
 
   // JWT configuration
-  JWT_SECRET: 'your-jwt-secret',
+  JWT_SECRET: 'client-portal-secret',
   JWT_EXPIRES_IN: '1d'
 };

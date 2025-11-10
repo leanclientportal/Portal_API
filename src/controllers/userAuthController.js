@@ -4,30 +4,30 @@ const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
 const asyncHandler = require('../middlewares/asyncHandler');
 const config = require('../config');
-const nodemailer = require('nodemailer');
+// const nodemailer = require('nodemailer');
 // const twilio = require('twilio'); // Commented out for now
 
-const transporter = nodemailer.createTransport({
-  service: 'gmail',
-  auth: {
-    user: config.GMAIL_USER,
-    pass: config.GMAIL_PASS
-  }
-});
+// const transporter = nodemailer.createTransport({
+//   service: 'gmail',
+//   auth: {
+//     user: config.GMAIL_USER,
+//     pass: config.GMAIL_PASS
+//   }
+// });
 
 /* // Commenting out Twilio for now
 const twilioClient = twilio(config.TWILIO_ACCOUNT_SID, config.TWILIO_AUTH_TOKEN);
 */
 
-const sendOtpEmail = async (email, otp) => {
-  const mailOptions = {
-    from: config.GMAIL_USER,
-    to: email,
-    subject: 'Your OTP for registration',
-    text: `Your OTP is: ${otp}`
-  };
-  await transporter.sendMail(mailOptions);
-};
+// const sendOtpEmail = async (email, otp) => {
+//   const mailOptions = {
+//     from: config.GMAIL_USER,
+//     to: email,
+//     subject: 'Your OTP for registration',
+//     text: `Your OTP is: ${otp}`
+//   };
+//   await transporter.sendMail(mailOptions);
+// };
 
 /* // Commenting out SMS sending for now
 const sendOtpSms = async (phone, otp) => {

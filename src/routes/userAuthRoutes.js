@@ -7,50 +7,21 @@ const {
   login,
   logout
 } = require('../controllers/userAuthController');
-const { validate } = require('../middlewares/validation');
-const { body } = require('express-validator');
+const { validate, validationSchemas } = require('../middlewares/validation');
 
 // These routes are now open and do not require authentication
 
 // Step 1: Send OTP for registration
-router.post('/send-otp',
-  [
-    body('email').isEmail().withMessage('Enter a valid email'),
-  ],
-  validate,
-  sendOtp
-);
+router.post('/send-otp', validate(validationSchemas.auth.sendOtp), sendOtp);
 
 // Step 2: Verify OTP
-router.post('/verify-otp',
-    [
-        body('email').isEmail().withMessage('Enter a valid email'),
-        body('otp').isLength({ min: 6, max: 6 }).withMessage('Enter a valid 6-digit OTP'),
-    ],
-    validate,
-    verifyOtp
-);
+router.post('/verify-otp', validate(validationSchemas.auth.verifyOtp), verifyOtp);
 
 // Step 3: Register a new user after OTP verification
-router.post('/register',
-  [
-    body('email').isEmail().withMessage('Enter a valid email'),
-    body('phone').isString().optional(),
-    body('password').isLength({ min: 6 }).withMessage('Password must be at least 6 characters long'),
-  ],
-  validate,
-  register
-);
+router.post('/register', validate(validationSchemas.auth.register), register);
 
 // Login a user
-router.post('/login',
-  [
-    body('login').notEmpty().withMessage('Enter email or phone number'),
-    body('password').notEmpty().withMessage('Enter password'),
-  ],
-  validate,
-  login
-);
+router.post('/login', validate(validationSchemas.auth.login), login);
 
 // Logout a user (requires authentication)
 const { protect } = require('../middlewares/auth');
