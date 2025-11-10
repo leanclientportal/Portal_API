@@ -1,6 +1,6 @@
 const User = require('../models/User');
 const Otp = require('../models/Otp');
-const bcrypt = require('bcryptjs');
+const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
 const asyncHandler = require('../middlewares/asyncHandler');
 const config = require('../config');
