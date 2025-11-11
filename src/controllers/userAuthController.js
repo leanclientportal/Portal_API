@@ -103,9 +103,6 @@ exports.register = asyncHandler(async (req, res) => {
 
   await newUser.save();
 
-  // Clean up the OTP from the database
-  await Otp.deleteOne({ identifier: email, otp });
-
   res.status(200).json({ message: 'User registered successfully. Please log in.' });
 });
 
