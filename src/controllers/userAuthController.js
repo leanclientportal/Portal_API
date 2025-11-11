@@ -56,7 +56,10 @@ exports.sendOtp = asyncHandler(async (req, res) => {
   const otp = Math.floor(100000 + Math.random() * 900000).toString();
 
   // Store OTP for the email
-  await Otp.findOneAndUpdate({ identifier: email }, { identifier: email, otp }, { upsert: true, new: true, setDefaultsOnInsert: true });
+  await Otp.findOneAndUpdate({ identifier: email },
+     { identifier: email, otp }, 
+    { upsert: true, new: true, setDefaultsOnInsert: true }
+  );
 
   // In a real application, you would uncomment this line
   // await sendOtpEmail(email, otp);
