@@ -4,46 +4,10 @@ const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
 const asyncHandler = require('../middlewares/asyncHandler');
 const config = require('../config');
-// const nodemailer = require('nodemailer');
-// const twilio = require('twilio'); // Commented out for now
 
-// const transporter = nodemailer.createTransport({
-//   service: 'gmail',
-//   auth: {
-//     user: config.GMAIL_USER,
-//     pass: config.GMAIL_PASS
-//   }
-// });
-
-/* // Commenting out Twilio for now
-const twilioClient = twilio(config.TWILIO_ACCOUNT_SID, config.TWILIO_AUTH_TOKEN);
-*/
-
-// const sendOtpEmail = async (email, otp) => {
-//   const mailOptions = {
-//     from: config.GMAIL_USER,
-//     to: email,
-//     subject: 'Your OTP for registration',
-//     text: `Your OTP is: ${otp}`
-//   };
-//   await transporter.sendMail(mailOptions);
-// };
-
-/* // Commenting out SMS sending for now
-const sendOtpSms = async (phone, otp) => {
-  await twilioClient.messages.create({
-    body: `Your OTP is: ${otp}`,
-    from: config.TWILIO_PHONE_NUMBER,
-    to: phone
-  });
-};
-*/
-
-// Step 1: Send OTP to user's email
 exports.sendOtp = asyncHandler(async (req, res) => {
   const { email } = req.body;
 
-  // Basic validation
   if (!email) {
     return res.status(400).json({ message: 'Email is required' });
   }
@@ -55,20 +19,16 @@ exports.sendOtp = asyncHandler(async (req, res) => {
 
   const otp = Math.floor(100000 + Math.random() * 900000).toString();
 
-  // Store OTP for the email
   await Otp.findOneAndUpdate({ identifier: email },
     { identifier: email, otp },
     { upsert: true, new: true, setDefaultsOnInsert: true }
   );
 
-  // In a real application, you would uncomment this line
-  // await sendOtpEmail(email, otp);
-  console.log(`OTP for ${email} is ${otp}`); // For debugging during development
+  console.log(`OTP for ${email} is ${otp}`);
 
   res.status(200).json({ message: 'OTP sent to your email. Please verify to continue.' });
 });
 
-// Step 2: Verify the OTP sent to the email
 exports.verifyOtp = asyncHandler(async (req, res) => {
   const { email, otp } = req.body;
 
@@ -85,12 +45,9 @@ exports.verifyOtp = asyncHandler(async (req, res) => {
   res.status(200).json({ message: 'OTP verified successfully. You can now complete your registration.' });
 });
 
-
-// Step 3: Complete registration after OTP verification
 exports.register = asyncHandler(async (req, res) => {
   const { email, password } = req.body;
 
-  // Check if user already exists (edge case)
   const userExists = await User.findOne({ email });
   if (userExists) {
     return res.status(400).json({ message: 'User already exists' });
@@ -106,25 +63,34 @@ exports.register = asyncHandler(async (req, res) => {
   res.status(200).json({ message: 'User registered successfully. Please log in.' });
 });
 
-
-// --- Existing Login and Logout Functions ---
-
 exports.login = asyncHandler(async (req, res) => {
+  console.log('Login attempt with body:', req.body);
   const { emailOrPhone, password } = req.body;
 
-  const user = await User.findOne({ $or: [{ email: emailOrPhone }, { phone: emailOrPhone }] }).select('+credential');
+  if (!emailOrPhone || !password) {
+    console.error('Login Error: Missing email/phone or password in request body.');
+    return res.status(400).json({ message: 'Email/phone and password are required' });
+  }
 
-  if (!user) {
+  const user = await User.findOne({ $or: [{ email: emailOrPhone }, { phone: emailOrPhone }] }).select('+credential.password');
+  console.log('User found in DB:', user ? user.toObject() : null);
+
+  if (!user || !user.credential || !user.credential.password) {
+    console.error('Login Error: User not found or password not available in database.');
     return res.status(400).json({ message: 'Invalid credentials' });
   }
 
+  console.log('Comparing provided password with stored hash...');
   const isMatch = await bcrypt.compare(password, user.credential.password);
+  console.log('Password comparison result:', isMatch);
 
   if (!isMatch) {
+    console.error('Login Error: Password comparison failed.');
     return res.status(400).json({ message: 'Invalid credentials' });
   }
 
   const token = jwt.sign({ id: user._id }, config.JWT_SECRET, { expiresIn: config.JWT_EXPIRES_IN });
+  console.log('Login successful. Token generated.');
 
   res.status(200).json({ token, userId: user._id });
 });
