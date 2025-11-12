@@ -1,26 +1,22 @@
 const mongoose = require('mongoose');
 
 const clientSchema = new mongoose.Schema({
-  tenantId: {
-    type: mongoose.Schema.Types.ObjectId,
-    ref: 'Tenant',
-    required: true,
-    index: true
-  },
   name: {
     type: String,
     required: true,
-    trim: true
+    minlength: 2,
+    maxlength: 100
   },
   email: {
     type: String,
     required: true,
+    unique: true,
     lowercase: true,
-    trim: true
   },
   phone: {
     type: String,
-    trim: true
+    minlength: 7,
+    maxlength: 20
   },
   isActive: {
     type: Boolean,
@@ -28,16 +24,14 @@ const clientSchema = new mongoose.Schema({
   },
   profileUrl: {
     type: String,
-    trim: true,
-    default: ''
+  },
+  tenantId: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'Tenant'
   }
 }, {
   timestamps: true,
   collection: 'client'
 });
-
-// Indexes for common multi-tenant queries and uniqueness per tenant
-clientSchema.index({ tenantId: 1, isActive: 1 });
-clientSchema.index({ tenantId: 1, email: 1 }, { unique: true });
 
 module.exports = mongoose.model('Client', clientSchema);

@@ -4,6 +4,9 @@ const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
 const asyncHandler = require('../middlewares/asyncHandler');
 const config = require('../config');
+const Client = require('../models/Client');
+const Tenant = require('../models/Tenant');
+const UserTenantClientMapping = require('../models/UserTenantClientMapping');
 
 exports.sendOtp = asyncHandler(async (req, res) => {
   const { email } = req.body;
@@ -46,19 +49,40 @@ exports.verifyOtp = asyncHandler(async (req, res) => {
 });
 
 exports.register = asyncHandler(async (req, res) => {
-  const { email, password } = req.body;
+  const { email, password, activeProfile = 'client' } = req.body;
 
   const userExists = await User.findOne({ email });
   if (userExists) {
     return res.status(400).json({ message: 'User already exists' });
   }
 
+  let masterId;
+  if (activeProfile === 'client') {
+    const newClient = new Client({ name: email.split('@')[0], email });
+    await newClient.save();
+    masterId = newClient._id;
+  } else if (activeProfile === 'tenant') {
+    const newTenant = new Tenant({ companyName: email.split('@')[0], email });
+    await newTenant.save();
+    masterId = newTenant._id;
+  }
+
   const newUser = new User({
     email,
-    credential: { password }
+    credential: { password },
+    activeProfile,
+    activeProfileId: masterId
   });
 
   await newUser.save();
+
+  const newMapping = new UserTenantClientMapping({
+    userId: newUser._id,
+    masterId,
+    role: activeProfile
+  });
+
+  await newMapping.save();
 
   res.status(200).json({ message: 'User registered successfully. Please log in.' });
 });
@@ -89,12 +113,92 @@ exports.login = asyncHandler(async (req, res) => {
     return res.status(400).json({ message: 'Invalid credentials' });
   }
 
+  const mapping = await UserTenantClientMapping.findOne({
+    userId: user._id,
+    masterId: user.activeProfileId,
+    role: user.activeProfile
+  });
+
+  if (!mapping) {
+    return res.status(400).json({ message: 'User mapping not found. Please contact support.' });
+  }
+
+  user.lastActiveDate = new Date();
+  await user.save();
+
   const token = jwt.sign({ id: user._id }, config.JWT_SECRET, { expiresIn: config.JWT_EXPIRES_IN });
   console.log('Login successful. Token generated.');
 
-  res.status(200).json({ token, userId: user._id });
+  res.status(200).json({ token, userId: user._id, activeProfile: user.activeProfile, activeProfileId: user.activeProfileId });
 });
 
 exports.logout = (req, res) => {
   res.status(200).json({ message: 'Logged out successfully' });
 };
+
+
+exports.switchAccount = asyncHandler(async (req, res) => {
+  const { activeProfile, masterId } = req.body;
+  const userId = req.user.id;
+
+  if (!activeProfile || !masterId) {
+    return res.status(400).json({ message: 'activeProfile and masterId are required' });
+  }
+
+  const mapping = await UserTenantClientMapping.findOne({
+    userId,
+    masterId,
+    role: activeProfile
+  });
+
+  if (!mapping) {
+    return res.status(404).json({ message: 'No account found for the provided details.' });
+  }
+
+  const user = await User.findById(userId);
+  if (!user) {
+    return res.status(404).json({ message: 'User not found.' });
+  }
+
+  user.activeProfile = activeProfile;
+  user.activeProfileId = masterId;
+  user.lastActiveDate = new Date();
+  await user.save();
+
+  const token = jwt.sign({ id: user._id }, config.JWT_SECRET, { expiresIn: config.JWT_EXPIRES_IN });
+
+  res.status(200).json({ token, userId: user._id, activeProfile: user.activeProfile, activeProfileId: user.activeProfileId });
+});
+
+
+exports.getAccounts = asyncHandler(async (req, res) => {
+  const userId = req.user.id;
+
+  const mappings = await UserTenantClientMapping.find({ userId });
+
+  if (!mappings || mappings.length === 0) {
+    return res.status(404).json({ message: 'No accounts found for this user.' });
+  }
+
+  const accounts = await Promise.all(mappings.map(async (mapping) => {
+    if (mapping.role === 'client') {
+      const client = await Client.findById(mapping.masterId);
+      return {
+        type: 'client',
+        id: client._id,
+        name: client.name,
+        email: client.email
+      };
+    } else if (mapping.role === 'tenant') {
+      const tenant = await Tenant.findById(mapping.masterId);
+      return {
+        type: 'tenant',
+        id: tenant._id,
+        companyName: tenant.companyName,
+        email: tenant.email
+      };
+    }
+  }));
+
+  res.status(200).json({ accounts });
+});

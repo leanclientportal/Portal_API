@@ -99,13 +99,13 @@ const getClients = asyncHandler(async (req, res) => {
   });
 });
 
-// @desc    Get a single client by tenant and client id
-// @route   GET /api/v1/clients/:tenantId/:clientId
+// @desc    Get a single client by client id
+// @route   GET /api/v1/clients/:clientId
 // @access  Private
 const getClientById = asyncHandler(async (req, res) => {
-  const { tenantId, clientId } = req.params;
+  const { clientId } = req.params;
 
-  const client = await Client.findOne({ _id: clientId, tenantId, isActive: true }).select('-__v');
+  const client = await Client.findOne({ _id: clientId, isActive: true }).select('-__v');
 
   if (!client) {
     return res.status(404).json({

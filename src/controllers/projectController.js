@@ -1,15 +1,23 @@
 const Project = require('../models/Project');
 const asyncHandler = require('../middlewares/asyncHandler');
 
-// @desc    Get all projects for a client
-// @route   GET /api/v1/projects/:tenantId/:clientId
+// @desc    Get all projects
+// @route   GET /api/v1/projects
 // @access  Private
 const getProjects = asyncHandler(async (req, res) => {
-  const { tenantId, clientId } = req.params;
   const { page = 1, limit = 20, search, status } = req.query;
+  const { activeProfile, activeProfileId } = req.user;
 
   // Build query
-  const query = { tenantId, clientId, isActive: true };
+  const query = { isActive: true };
+
+  if (activeProfile === 'tenant') {
+    query.tenantId = activeProfileId;
+  } else if (activeProfile === 'client') {
+    query.clientId = activeProfileId;
+  } else {
+    return res.status(400).json({ success: false, message: 'Invalid active profile' });
+  }
   
   if (search) {
     query.$or = [
@@ -69,15 +77,13 @@ const createProject = asyncHandler(async (req, res) => {
 });
 
 // @desc    Get project details
-// @route   GET /api/v1/projects/:tenantId/:clientId/:projectId
+// @route   GET /api/v1/projects/:projectId
 // @access  Private
 const getProject = asyncHandler(async (req, res) => {
-  const { tenantId, clientId, projectId } = req.params;
+  const { projectId } = req.params;
 
   const project = await Project.findOne({
     _id: projectId,
-    tenantId,
-    clientId,
     isActive: true
   }).populate('clientId', 'name email company');
 

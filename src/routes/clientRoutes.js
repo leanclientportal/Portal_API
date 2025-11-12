@@ -23,7 +23,6 @@ const paramSchemaList = Joi.object({
 });
 
 const paramSchemaDetail = Joi.object({
-  tenantId: objectIdSchema.required(),
   clientId: objectIdSchema.required()
 });
 
@@ -40,7 +39,7 @@ router.route('/:tenantId')
     createClient
   );
 
-router.route('/:tenantId/:clientId')
+router.route('/:clientId')
   .get(
     validateParams(paramSchemaDetail),
     getClientById

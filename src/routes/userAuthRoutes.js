@@ -5,7 +5,9 @@ const {
   verifyOtp,
   register,
   login,
-  logout
+  logout,
+  switchAccount,
+  getAccounts
 } = require('../controllers/userAuthController');
 const { validate, validationSchemas } = require('../middlewares/validation');
 
@@ -26,5 +28,11 @@ router.post('/login', validate(validationSchemas.auth.login), login);
 // Logout a user (requires authentication)
 const { protect } = require('../middlewares/auth');
 router.post('/logout', protect, logout);
+
+// Switch account
+router.post('/switch-account', protect, switchAccount);
+
+// Get all accounts for a user
+router.get('/get-accounts', protect, getAccounts);
 
 module.exports = router;

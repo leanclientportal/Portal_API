@@ -201,7 +201,8 @@ const validationSchemas = {
     register: Joi.object({
       email: Joi.string().email().required().messages({ 'string.email': 'Enter a valid email' }),
       phone: Joi.string().optional(),
-      password: Joi.string().min(6).required().messages({ 'string.min': 'Password must be at least 6 characters long' })
+      password: Joi.string().min(6).required().messages({ 'string.min': 'Password must be at least 6 characters long' }),
+      activeProfile: Joi.string().valid('client', 'tenant').default('client')
     }),
     login: Joi.object({
       emailOrPhone: Joi.string().required().messages({ 'any.required': 'Enter email or phone number' }),

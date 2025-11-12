@@ -6,6 +6,7 @@ const {
   updateProject,
   deleteProject
 } = require('../controllers/projectController');
+const { protect } = require('../middlewares/auth');
 const { 
   validate, 
   validateQuery,
@@ -23,24 +24,24 @@ const paramSchemaList = Joi.object({
 });
 
 const paramSchemaDetail = Joi.object({
-  tenantId: objectIdSchema.required(),
-  clientId: objectIdSchema.required(),
   projectId: objectIdSchema.required()
 });
 
-router.route('/:tenantId/:clientId')
+router.route('/')
   .get(
-    validateParams(paramSchemaList),
+    protect,
     validateQuery(validationSchemas.pagination),
     getProjects
-  )
+  );
+
+router.route('/:tenantId/:clientId')
   .post(
     validateParams(paramSchemaList),
     validate(validationSchemas.project.create),
     createProject
   );
 
-router.route('/:tenantId/:clientId/:projectId')
+router.route('/:projectId')
   .get(validateParams(paramSchemaDetail), getProject)
   .put(
     validateParams(paramSchemaDetail),
