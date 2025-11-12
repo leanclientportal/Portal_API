@@ -57,7 +57,7 @@ exports.sendOtp = asyncHandler(async (req, res) => {
 
   // Store OTP for the email
   await Otp.findOneAndUpdate({ identifier: email },
-     { identifier: email, otp }, 
+    { identifier: email, otp },
     { upsert: true, new: true, setDefaultsOnInsert: true }
   );
 
@@ -70,19 +70,19 @@ exports.sendOtp = asyncHandler(async (req, res) => {
 
 // Step 2: Verify the OTP sent to the email
 exports.verifyOtp = asyncHandler(async (req, res) => {
-    const { email, otp } = req.body;
+  const { email, otp } = req.body;
 
-    if (!email || !otp) {
-        return res.status(400).json({ message: 'Email and OTP are required' });
-    }
+  if (!email || !otp) {
+    return res.status(400).json({ message: 'Email and OTP are required' });
+  }
 
-    const otpData = await Otp.findOne({ identifier: email, otp });
+  const otpData = await Otp.findOne({ identifier: email, otp });
 
-    if (!otpData) {
-        return res.status(400).json({ message: 'Invalid or expired OTP' });
-    }
+  if (!otpData) {
+    return res.status(400).json({ message: 'Invalid or expired OTP' });
+  }
 
-    res.status(200).json({ message: 'OTP verified successfully. You can now complete your registration.' });
+  res.status(200).json({ message: 'OTP verified successfully. You can now complete your registration.' });
 });
 
 
@@ -110,9 +110,9 @@ exports.register = asyncHandler(async (req, res) => {
 // --- Existing Login and Logout Functions ---
 
 exports.login = asyncHandler(async (req, res) => {
-  const { login, password } = req.body;
+  const { emailOrPhone, password } = req.body;
 
-  const user = await User.findOne({ $or: [{ email: login }, { phone: login }] }).select('+credential');
+  const user = await User.findOne({ $or: [{ email: emailOrPhone }, { phone: emailOrPhone }] }).select('+credential');
 
   if (!user) {
     return res.status(400).json({ message: 'Invalid credentials' });

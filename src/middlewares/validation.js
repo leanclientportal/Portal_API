@@ -204,7 +204,7 @@ const validationSchemas = {
       password: Joi.string().min(6).required().messages({ 'string.min': 'Password must be at least 6 characters long' })
     }),
     login: Joi.object({
-      login: Joi.string().required().messages({ 'any.required': 'Enter email or phone number' }),
+      emailOrPhone: Joi.string().required().messages({ 'any.required': 'Enter email or phone number' }),
       password: Joi.string().required().messages({ 'any.required': 'Enter password' })
     }),
     updateDetails: Joi.object({
