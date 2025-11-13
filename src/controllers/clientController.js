@@ -126,14 +126,14 @@ const getClientById = asyncHandler(async (req, res) => {
 // @access  Private
 const createClient = asyncHandler(async (req, res) => {
   const { tenantId } = req.params;
-
-  if (req.body && req.body.profileImageBinary) {
+  const dataFields = { ...req.body };
+  if (dataFields) {
     const client = await Client.create({
-      name: req.body.name,
-      email: req.body.email,
-      phone: req.body.phone,
-      isActive: req.body.isActive,
-      profileUrl:req.body.profileImageUrl,
+      name: dataFields.name,
+      email: dataFields.email,
+      phone: dataFields.phone,
+      isActive: dataFields.isActive,
+      profileUrl: dataFields.profileImageUrl,
       tenantId
     });
   }

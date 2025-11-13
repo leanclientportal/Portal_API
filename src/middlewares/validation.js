@@ -53,7 +53,7 @@ const validationSchemas = {
       phone: Joi.string().min(7).max(20),
       isActive: Joi.boolean(),
       profileUrl: Joi.string().uri(),
-      profileImageBinary: Joi.string()
+      profileImageUrl: Joi.string()
     }),
     update: Joi.object({
       name: Joi.string().min(2).max(100),
@@ -61,7 +61,7 @@ const validationSchemas = {
       phone: Joi.string().min(7).max(20),
       isActive: Joi.boolean(),
       profileUrl: Joi.string().uri(),
-      profileImageBinary: Joi.string()
+      profileImageUrl: Joi.string()
     })
   },
 
