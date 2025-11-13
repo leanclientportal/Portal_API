@@ -27,12 +27,12 @@ router.post('/login', validate(validationSchemas.auth.login), login);
 
 // Logout a user (requires authentication)
 const { protect } = require('../middlewares/auth');
-router.post('/logout', protect, logout);
+router.post('/logout', logout);
 
 // Switch account
-router.post('/switch-account', protect, switchAccount);
+router.post('/switch-account/:userId', switchAccount);
 
 // Get all accounts for a user
-router.get('/get-accounts', protect, getAccounts);
+router.get('/get-accounts/:userId', getAccounts);
 
 module.exports = router;
