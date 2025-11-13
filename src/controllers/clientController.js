@@ -127,46 +127,16 @@ const getClientById = asyncHandler(async (req, res) => {
 const createClient = asyncHandler(async (req, res) => {
   const { tenantId } = req.params;
 
-  let profileUrl = '';
-  const folderPath = `lean-client-portal/${tenantId}/clients`;
-
-
-  // 2) JSON base64/data URI path via profileImageBinary
   if (req.body && req.body.profileImageBinary) {
     const client = await Client.create({
       name: req.body.name,
       email: req.body.email,
       phone: req.body.phone,
       isActive: req.body.isActive,
-      profileUrl,
+      profileUrl:req.body.profileImageUrl,
       tenantId
     });
-
-    const outputDir = path.join(__dirname, `${folderPath}`);
-    if (!fs.existsSync(outputDir)) {
-      fs.mkdirSync(outputDir);
-    }
-
-    const imagePath = path.join(outputDir, `profile_${client._id}.jpeg`);
-    const imageby64 = req.body.profileImageBinary.replace('data:image/jpeg;base64,', '');
-    // Save file
-    fs.writeFileSync(imagePath, Buffer.from(imageby64, 'base64'));
-
-    const updateclient = await Client.findOneAndUpdate(
-      { _id: client._id, tenantId },
-      { profileUrl: imagePath },
-      { new: true }
-    );
-    // Make sure folder exists
-    // try {
-    //   await ensureCloudinaryFolder(folderPath);
-    // } catch (e) {
-    //   return res.status(500).json({ success: false, message: 'Failed to prepare storage folder', error: e.message });
-    // }
-
   }
-
-
   res.status(201).json({
     success: true,
     message: 'Client created successfully',
@@ -178,34 +148,7 @@ const createClient = asyncHandler(async (req, res) => {
 // @access  Private
 const updateClient = asyncHandler(async (req, res) => {
   const { tenantId, clientId } = req.params;
-
-  const folderPath = `lean-client-portal/${tenantId}/clients`;
-  const outputDir = path.join(__dirname, `${folderPath}`);
-
   const updateFields = { ...req.body };
-
-  // Handle multipart file if provided
-  if (req.file && req.file.buffer) {
-    if (!fs.existsSync(outputDir)) {
-      fs.mkdirSync(outputDir, { recursive: true });
-    }
-    const imagePath = path.join(outputDir, `profile_${clientId}.jpeg`);
-    fs.writeFileSync(imagePath, req.file.buffer);
-    updateFields.profileUrl = imagePath;
-  }
-
-  // Handle base64/data URI if provided
-  if (req.body && req.body.profileImageBinary) {
-    if (!fs.existsSync(outputDir)) {
-      fs.mkdirSync(outputDir, { recursive: true });
-    }
-    const imagePath = path.join(outputDir, `profile_${clientId}.jpeg`);
-    const data = req.body.profileImageBinary
-      .replace(/^data:image\/[^;]+;base64,/, '');
-    fs.writeFileSync(imagePath, Buffer.from(data, 'base64'));
-    updateFields.profileUrl = imagePath;
-    delete updateFields.profileImageBinary;
-  }
 
   const client = await Client.findOneAndUpdate(
     { _id: clientId, tenantId },
