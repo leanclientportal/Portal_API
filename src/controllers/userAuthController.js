@@ -139,7 +139,7 @@ exports.logout = (req, res) => {
 
 exports.switchAccount = asyncHandler(async (req, res) => {
   const { activeProfile, masterId } = req.body;
-  const userId = req.params;
+  const { userId } = req.params;
 
   if (!activeProfile || !masterId) {
     return res.status(400).json({ message: 'activeProfile and masterId are required' });
@@ -159,13 +159,13 @@ exports.switchAccount = asyncHandler(async (req, res) => {
   if (!user) {
     return res.status(404).json({ message: 'User not found.' });
   }
-  const token = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjY5MTQ2YzA4ZThmMDA3NjEyZDgyNGVjMSIsImlhdCI6MTc2MzAwNzc5MiwiZXhwIjoxNzYzMDk0MTkyfQ.ApmQJT1KWEjWy-Eu5as0rG0te8mUSN5k962lknoKeCc";
-  // user.activeProfile = activeProfile;
-  // user.activeProfileId = masterId;
-  // user.lastActiveDate = new Date();
-  // await user.save();
 
-  // const token = jwt.sign({ id: user._id }, config.JWT_SECRET, { expiresIn: config.JWT_EXPIRES_IN });
+  user.activeProfile = activeProfile;
+  user.activeProfileId = masterId;
+  user.lastActiveDate = new Date();
+  await user.save();
+
+  const token = jwt.sign({ id: user._id }, config.JWT_SECRET, { expiresIn: config.JWT_EXPIRES_IN });
 
   res.status(200).json({ token, userId: user._id, activeProfile: user.activeProfile, activeProfileId: user.activeProfileId });
 });
