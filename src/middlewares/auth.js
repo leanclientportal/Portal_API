@@ -1,6 +1,6 @@
 const asyncHandler = require('./asyncHandler');
 const jwt = require('jsonwebtoken');
-const Tenant = require('../models/Tenant');
+const User = require('../models/User');
 
 // Protect routes
 exports.protect = asyncHandler(async (req, res, next) => {
@@ -23,22 +23,22 @@ exports.protect = asyncHandler(async (req, res, next) => {
         // Verify token
         const decoded = jwt.verify(token, process.env.JWT_SECRET || 'your-secret-key-change-this');
 
-        req.tenant = await Tenant.findById(decoded.id);
+        req.user = await User.findById(decoded.id);
 
-        if (!req.tenant) {
+        if (!req.user) {
             return res.status(401).json({
                 success: false,
-                message: 'Tenant not found'
+                message: 'User not found'
             });
         }
 
-        if (!req.tenant.isActive) {
+        if (!req.user.isActive) {
             return res.status(401).json({
                 success: false,
                 message: 'Account is inactive'
             });
         }
-
+        req.userId = decoded.id;
         next();
     } catch (err) {
         return res.status(401).json({
@@ -51,20 +51,19 @@ exports.protect = asyncHandler(async (req, res, next) => {
 // Grant access to specific roles
 exports.authorize = (...roles) => {
     return (req, res, next) => {
-        if (!req.tenant) {
+        if (!req.user) {
             return res.status(401).json({
                 success: false,
                 message: 'Not authorized to access this route'
             });
         }
 
-        if (!roles.includes(req.tenant.role)) {
+        if (!roles.includes(req.user.activeProfile)) {
             return res.status(403).json({
                 success: false,
-                message: `Tenant role '${req.tenant.role}' is not authorized to access this route`
+                message: `User role '${req.user.activeProfile}' is not authorized to access this route`
             });
         }
         next();
     };
 };
-

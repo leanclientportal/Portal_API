@@ -102,13 +102,13 @@ const getProject = asyncHandler(async (req, res) => {
 });
 
 // @desc    Update project
-// @route   PUT /api/v1/projects/:tenantId/:clientId/:projectId
+// @route   PUT /api/v1/projects/:projectId
 // @access  Private
 const updateProject = asyncHandler(async (req, res) => {
-  const { tenantId, clientId, projectId } = req.params;
+  const { projectId } = req.params;
 
   const project = await Project.findOneAndUpdate(
-    { _id: projectId, tenantId, clientId },
+    { _id: projectId },
     req.body,
     {
       new: true,
@@ -131,13 +131,13 @@ const updateProject = asyncHandler(async (req, res) => {
 });
 
 // @desc    Delete project (soft delete)
-// @route   DELETE /api/v1/projects/:tenantId/:clientId/:projectId
+// @route   DELETE /api/v1/projects/:projectId
 // @access  Private
 const deleteProject = asyncHandler(async (req, res) => {
-  const { tenantId, clientId, projectId } = req.params;
+  const { projectId } = req.params;
 
   const project = await Project.findOneAndUpdate(
-    { _id: projectId, tenantId, clientId },
+    { _id: projectId },
     { isActive: false },
     { new: true }
   );

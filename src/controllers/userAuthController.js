@@ -139,7 +139,7 @@ exports.logout = (req, res) => {
 
 exports.switchAccount = asyncHandler(async (req, res) => {
   const { activeProfile, masterId } = req.body;
-  const userId = req.user.id;
+  const userId = req.userId;
 
   if (!activeProfile || !masterId) {
     return res.status(400).json({ message: 'activeProfile and masterId are required' });
@@ -172,7 +172,7 @@ exports.switchAccount = asyncHandler(async (req, res) => {
 
 
 exports.getAccounts = asyncHandler(async (req, res) => {
-  const userId = req.user.id;
+  const userId = req.userId;
 
   const mappings = await UserTenantClientMapping.find({ userId });
 
@@ -194,7 +194,7 @@ exports.getAccounts = asyncHandler(async (req, res) => {
       return {
         type: 'tenant',
         id: tenant._id,
-        companyName: tenant.companyName,
+        name: tenant.companyName,
         email: tenant.email
       };
     }
