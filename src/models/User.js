@@ -35,9 +35,6 @@ const userSchema = new mongoose.Schema({
   },
   lastActiveDate: {
     type: Date
-  },
-  credential: {
-    type: credentialSchema
   }
 }, {
   timestamps: true,

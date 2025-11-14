@@ -1,12 +1,15 @@
 const jwt = require('jsonwebtoken');
 const User = require('../models/User');
 const Otp = require('../models/Otp');
+const Tenant = require('../models/Tenant');
+const Client = require('../models/Client');
+const UserTenantClientMapping = require('../models/UserTenantClientMapping');
 const asyncHandler = require('../middlewares/asyncHandler');
 const config = require('../config');
 const { generateNumericOTP } = require('../utils/otpGenerator');
 
 exports.sendOtp = asyncHandler(async (req, res) => {
-  const { email, type } = req.body; // Added 'type'
+  const { email, type } = req.body;
 
   if (!email || !type) {
     return res.status(400).json({ message: 'Email and type are required' });
@@ -23,7 +26,7 @@ exports.sendOtp = asyncHandler(async (req, res) => {
   const otp = generateNumericOTP(6);
   await Otp.findOneAndUpdate(
     { identifier: email },
-    { identifier: email, otp, expiresAt: new Date(Date.now() + 10 * 60 * 1000) }, // OTP valid for 10 minutes
+    { identifier: email, otp, expiresAt: new Date(Date.now() + 10 * 60 * 1000) },
     { upsert: true, new: true, setDefaultsOnInsert: true }
   );
 
@@ -32,7 +35,7 @@ exports.sendOtp = asyncHandler(async (req, res) => {
 });
 
 exports.verifyOtp = asyncHandler(async (req, res) => {
-  const { email, otp, name, phone, type, activeProfile = 'client' } = req.body; // Added 'type'
+  const { email, otp, name, phone, type, activeProfile = 'client' } = req.body;
 
   if (!email || !otp || !type) {
     return res.status(400).json({ message: 'Email, OTP, and type are required' });
@@ -45,44 +48,57 @@ exports.verifyOtp = asyncHandler(async (req, res) => {
   }
 
   let user = await User.findOne({ email });
-  let masterId;
-  
+  let activeProfileId;
+
   if (type === 'registration' && !user) {
-    // Create a new user only during registration
-    const masterUser = new User({
-        name,
-        email,
-        phone,
-        profiles: [{
-            profileType: activeProfile,
-            isActive: true
-        }],
-        activeProfile: activeProfile,
+    let profileId;
+    if (activeProfile === 'tenant') {
+      const newTenant = new Tenant({ companyName: name, email, phone });
+      await newTenant.save();
+      profileId = newTenant._id;
+    } else {
+      const newClient = new Client({ name, email, phone });
+      await newClient.save();
+      profileId = newClient._id;
+    }
+
+    const newUser = new User({
+      name,
+      email,
+      phone,
+      activeProfile,
+      activeProfileId: profileId,
     });
-    await masterUser.save();
-    user = masterUser;
-    masterId = masterUser._id;
+    await newUser.save();
+    user = newUser;
+    activeProfileId = profileId;
+
+    const newMapping = new UserTenantClientMapping({
+      userId: user._id,
+      masterId: profileId,
+      role: activeProfile
+    });
+    await newMapping.save();
 
   } else if (type === 'login' && !user) {
     return res.status(404).json({ message: 'User not found. Please register.' });
+  } else {
+    activeProfileId = user.activeProfileId;
   }
-  
-  // If user exists or was just created, proceed to generate token
-  if(user) {
-    // Generate JWT token
+
+  if (user) {
     const token = jwt.sign({ id: user._id }, config.JWT_SECRET, { expiresIn: config.JWT_EXPIRES_IN });
-  
+
     res.status(200).json({
       success: true,
       message: 'OTP verified and user processed successfully.',
       token,
       userId: user._id,
       activeProfile: user.activeProfile,
-      activeProfileId: user.activeProfileId,
+      activeProfileId,
     });
   } else {
-    // This case should ideally not be reached if logic is correct
-    return res.status(400).json({message: "Could not process user."})
+    return res.status(400).json({ message: "Could not process user." });
   }
 });
 
@@ -95,8 +111,6 @@ exports.login = asyncHandler(async (req, res) => {
 });
 
 exports.logout = asyncHandler(async (req, res) => {
-  // For JWT, logout is typically handled client-side by deleting the token.
-  // This endpoint is here to provide a standard RESTful logout flow.
   res.status(200).json({ success: true, message: 'Logged out successfully' });
 });
 
@@ -132,7 +146,6 @@ exports.switchAccount = asyncHandler(async (req, res) => {
 
   res.status(200).json({ token, userId: user._id, activeProfile: user.activeProfile, activeProfileId: user.activeProfileId });
 });
-
 
 exports.getAccounts = asyncHandler(async (req, res) => {
   const { userId } = req.params;
