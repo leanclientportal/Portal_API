@@ -1,31 +1,39 @@
 const Project = require('../models/Project');
 const asyncHandler = require('../middlewares/asyncHandler');
+const TenantClientMapping = require('../models/TenantClientMapping');
 
 // @desc    Get all projects
 // @route   GET /api/v1/projects
 // @access  Private
 const getProjects = asyncHandler(async (req, res) => {
-  const { page = 1, limit = 20, search, status } = req.query;
-  const { activeProfile, activeProfileId } = req.user;
-
-  // Build query
+  const { page = 1, limit = 20, search, status, activeProfile, activeProfileId } = req.query;
   const query = { isActive: true };
+
+  if (!activeProfile || !activeProfileId) {
+    return res.status(400).json({ success: false, message: 'Active profile and ID are required' });
+  }
 
   if (activeProfile === 'tenant') {
     query.tenantId = activeProfileId;
+    const clientMappings = await TenantClientMapping.find({ tenantId: activeProfileId }).select('clientId');
+    const clientIds = clientMappings.map(mapping => mapping.clientId);
+    query.clientId = { $in: clientIds };
   } else if (activeProfile === 'client') {
     query.clientId = activeProfileId;
+    const tenantMappings = await TenantClientMapping.find({ clientId: activeProfileId }).select('tenantId');
+    const tenantIds = tenantMappings.map(mapping => mapping.tenantId);
+    query.tenantId = { $in: tenantIds };
   } else {
     return res.status(400).json({ success: false, message: 'Invalid active profile' });
   }
-  
+
   if (search) {
     query.$or = [
       { name: { $regex: search, $options: 'i' } },
       { description: { $regex: search, $options: 'i' } }
     ];
   }
-  
+
   if (status) {
     query.status = status;
   }
