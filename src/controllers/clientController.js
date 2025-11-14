@@ -1,42 +1,7 @@
 const Client = require('../models/Client');
 const Project = require('../models/Project');
+const TenantClientMapping = require('../models/TenantClientMapping');
 const asyncHandler = require('../middlewares/asyncHandler');
-const multer = require('multer');
-const cloudinary = require('cloudinary').v2;
-const path = require('path');
-const fs = require('fs');
-
-// Configure Cloudinary (reuse env vars as in documentController)
-cloudinary.config({
-  cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
-  api_key: process.env.CLOUDINARY_API_KEY,
-  api_secret: process.env.CLOUDINARY_API_SECRET,
-});
-
-// Ensure a folder exists in Cloudinary (idempotent)
-async function ensureCloudinaryFolder(folderPath) {
-  try {
-    await cloudinary.api.create_folder(folderPath);
-  } catch (err) {
-    // If folder already exists or admin API limited, ignore specific errors
-    // Cloudinary returns error code 409 for existing folders
-    if (!(err && (err.http_code === 409 || /already exists/i.test(err.message || '')))) {
-      throw err;
-    }
-  }
-}
-
-// Memory storage for small images
-const storage = multer.memoryStorage();
-const upload = multer({
-  storage,
-  limits: { fileSize: 5 * 1024 * 1024 }, // 5MB
-  fileFilter: (req, file, cb) => {
-    const allowed = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];
-    if (allowed.includes(file.mimetype)) return cb(null, true);
-    cb(new Error('Only image files are allowed'));
-  }
-});
 
 // @desc    Get all clients for a tenant
 // @route   GET /api/v1/clients/:tenantId
@@ -45,22 +10,19 @@ const getClients = asyncHandler(async (req, res) => {
   const { tenantId } = req.params;
   const { page = 1, limit = 20, search, status } = req.query;
 
-  // Build query
-  const query = { tenantId, isActive: true };
+  // Find all client IDs associated with the tenant
+  const clientMappings = await TenantClientMapping.find({ tenantId }).select('clientId');
+  const clientIds = clientMappings.map(mapping => mapping.clientId);
 
+  const query = { _id: { $in: clientIds }, isActive: true };
   if (search) {
     query.$or = [
       { name: { $regex: search, $options: 'i' } },
       { email: { $regex: search, $options: 'i' } },
-      { company: { $regex: search, $options: 'i' } }
     ];
   }
+  if (status) query.status = status;
 
-  if (status) {
-    query.status = status;
-  }
-
-  // Execute query with pagination
   const clients = await Client.find(query)
     .select('-__v')
     .sort({ createdAt: -1 })
@@ -69,18 +31,10 @@ const getClients = asyncHandler(async (req, res) => {
 
   const total = await Client.countDocuments(query);
 
-  // Get total projects count for each client
   const clientsWithProjects = await Promise.all(
     clients.map(async (client) => {
-      const totalProjects = await Project.countDocuments({
-        tenantId,
-        clientId: client._id,
-        isActive: true
-      });
-      return {
-        ...client.toObject(),
-        totalProjects
-      };
+      const totalProjects = await Project.countDocuments({ clientId: client._id, isActive: true });
+      return { ...client.toObject(), totalProjects };
     })
   );
 
@@ -89,58 +43,66 @@ const getClients = asyncHandler(async (req, res) => {
     message: 'Clients retrieved successfully',
     data: {
       clients: clientsWithProjects,
-      pagination: {
-        current: parseInt(page),
-        total: Math.ceil(total / limit),
-        count: clientsWithProjects.length,
-        totalRecords: total
-      }
-    }
+      pagination: { current: parseInt(page), total: Math.ceil(total / limit), count: clients.length, totalRecords: total },
+    },
   });
 });
 
 // @desc    Get a single client by client id
-// @route   GET /api/v1/clients/:clientId
+// @route   GET /api/v1/clients/:tenantId/:clientId
 // @access  Private
 const getClientById = asyncHandler(async (req, res) => {
-  const { clientId } = req.params;
+  const { tenantId, clientId } = req.params;
+
+  // Verify that the client is mapped to the tenant
+  const mapping = await TenantClientMapping.findOne({ tenantId, clientId });
+  if (!mapping) {
+    res.status(404);
+    throw new Error('Client not found for this tenant');
+  }
 
   const client = await Client.findOne({ _id: clientId, isActive: true }).select('-__v');
 
   if (!client) {
-    return res.status(404).json({
-      success: false,
-      message: 'Client not found'
-    });
+    res.status(404);
+    throw new Error('Client not found');
   }
 
-  res.status(200).json({
-    success: true,
-    message: 'Client retrieved successfully',
-    data: client
-  });
+  res.status(200).json({ success: true, message: 'Client retrieved successfully', data: client });
 });
 
-// @desc    Create new client
+// @desc    Create new client and mapping
 // @route   POST /api/v1/clients/:tenantId
 // @access  Private
 const createClient = asyncHandler(async (req, res) => {
   const { tenantId } = req.params;
-  const dataFields = { ...req.body };
-  if (dataFields) {
-    const client = await Client.create({
-      name: dataFields.name,
-      email: dataFields.email,
-      phone: dataFields.phone,
-      isActive: dataFields.isActive,
-      profileUrl: dataFields.profileImageUrl,
-      tenantId
-    });
+  const { name, email, phone, profileUrl } = req.body;
+
+  if (!name || !email) {
+    res.status(400);
+    throw new Error('Please provide name and email');
   }
-  res.status(201).json({
-    success: true,
-    message: 'Client created successfully',
+
+  // Check if a client with this email already exists and is mapped to this tenant
+  const existingClient = await Client.findOne({ email });
+  if (existingClient) {
+    const existingMapping = await TenantClientMapping.findOne({ tenantId, clientId: existingClient._id });
+    if (existingMapping) {
+      res.status(400);
+      throw new Error('A client with this email already exists and is mapped to this tenant');
+    }
+  }
+
+  // Create the new client
+  const client = await Client.create({ name, email, phone, profileUrl });
+
+  // Create the mapping between the tenant and the new client
+  await TenantClientMapping.create({
+    tenantId,
+    clientId: client._id,
   });
+
+  res.status(201).json({ success: true, message: 'Client created and mapped successfully.', data: client });
 });
 
 // @desc    Update client
@@ -148,29 +110,22 @@ const createClient = asyncHandler(async (req, res) => {
 // @access  Private
 const updateClient = asyncHandler(async (req, res) => {
   const { tenantId, clientId } = req.params;
-  const updateFields = { ...req.body };
 
-  const client = await Client.findOneAndUpdate(
-    { _id: clientId, tenantId },
-    updateFields,
-    {
-      new: true,
-      runValidators: true
-    }
-  );
-
-  if (!client) {
-    return res.status(404).json({
-      success: false,
-      message: 'Client not found'
-    });
+  // Verify that the client is mapped to the tenant
+  const mapping = await TenantClientMapping.findOne({ tenantId, clientId });
+  if (!mapping) {
+    res.status(404);
+    throw new Error('Client not found for this tenant');
   }
 
-  res.status(200).json({
-    success: true,
-    message: 'Client updated successfully',
-    data: client
-  });
+  const client = await Client.findOneAndUpdate({ _id: clientId }, req.body, { new: true, runValidators: true });
+
+  if (!client) {
+    res.status(404);
+    throw new Error('Client not found');
+  }
+
+  res.status(200).json({ success: true, message: 'Client updated successfully', data: client });
 });
 
 // @desc    Delete client (soft delete)
@@ -179,23 +134,21 @@ const updateClient = asyncHandler(async (req, res) => {
 const deleteClient = asyncHandler(async (req, res) => {
   const { tenantId, clientId } = req.params;
 
-  const client = await Client.findOneAndUpdate(
-    { _id: clientId, tenantId },
-    { isActive: false },
-    { new: true }
-  );
-
-  if (!client) {
-    return res.status(404).json({
-      success: false,
-      message: 'Client not found'
-    });
+  // Verify that the client is mapped to the tenant
+  const mapping = await TenantClientMapping.findOne({ tenantId, clientId });
+  if (!mapping) {
+    res.status(404);
+    throw new Error('Client not found for this tenant');
   }
 
-  res.status(200).json({
-    success: true,
-    message: 'Client deleted successfully'
-  });
+  const client = await Client.findOneAndUpdate({ _id: clientId }, { isActive: false }, { new: true });
+
+  if (!client) {
+    res.status(404);
+    throw new Error('Client not found');
+  }
+
+  res.status(200).json({ success: true, message: 'Client deleted successfully' });
 });
 
 module.exports = {
@@ -204,5 +157,4 @@ module.exports = {
   createClient,
   updateClient,
   deleteClient,
-  upload
 };

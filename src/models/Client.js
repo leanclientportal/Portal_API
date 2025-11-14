@@ -24,10 +24,6 @@ const clientSchema = new mongoose.Schema({
   },
   profileUrl: {
     type: String,
-  },
-  tenantId: {
-    type: mongoose.Schema.Types.ObjectId,
-    ref: 'Tenant'
   }
 }, {
   timestamps: true,
