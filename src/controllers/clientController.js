@@ -120,8 +120,7 @@ const createClient = asyncHandler(async (req, res) => {
   // Create mapping between user, tenant, and client
   await UserTenantClientMapping.create({
     userId: user._id,
-    tenantId,
-    clientId: client._id,
+    masterId: client._id,
     role: 'client', // Assuming 'client' role for this mapping
   });
 
