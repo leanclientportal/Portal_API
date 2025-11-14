@@ -1,58 +1,34 @@
 const Tenant = require('../models/Tenant');
+const TenantClientMapping = require('../models/TenantClientMapping');
 const asyncHandler = require('../middlewares/asyncHandler');
+const ErrorResponse = require('../utils/errorResponse');
 
-// @desc    Get tenant details
-// @route   GET /api/v1/tenant/:tenantId
+// @desc    Get all tenants associated with a specific client
+// @route   GET /api/v1/tenants/by-client/:clientId
 // @access  Private
-const getTenant = asyncHandler(async (req, res) => {
-  const { tenantId } = req.params;
+exports.getTenantsByClientId = asyncHandler(async (req, res, next) => {
+  const { clientId } = req.params;
 
-  const tenant = await Tenant.findById(tenantId).populate('subscription.planId');
+  // Find all tenant mappings for the given client ID
+  const mappings = await TenantClientMapping.find({ clientId });
 
-  if (!tenant) {
-    return res.status(404).json({
-      success: false,
-      message: 'Tenant not found'
+  if (!mappings || mappings.length === 0) {
+    return res.status(200).json({
+      success: true,
+      data: [],
+      message: 'No tenants found for the provided client ID.'
     });
   }
 
-  res.status(200).json({
-    success: true,
-    message: 'Tenant details retrieved successfully',
-    data: tenant
-  });
-});
+  // Extract the tenant IDs from the mappings
+  const tenantIds = mappings.map(mapping => mapping.tenantId);
 
-// @desc    Update tenant details
-// @route   PUT /api/v1/tenant/:tenantId
-// @access  Private
-const updateTenant = asyncHandler(async (req, res) => {
-  const { tenantId } = req.params;
-
-  const tenant = await Tenant.findByIdAndUpdate(
-    tenantId,
-    req.body,
-    {
-      new: true,
-      runValidators: true
-    }
-  ).populate('subscription.planId');
-
-  if (!tenant) {
-    return res.status(404).json({
-      success: false,
-      message: 'Tenant not found'
-    });
-  }
+  // Find all tenants that match the extracted IDs
+  const tenants = await Tenant.find({ '_id': { $in: tenantIds } });
 
   res.status(200).json({
     success: true,
-    message: 'Tenant updated successfully',
-    data: tenant
+    count: tenants.length,
+    data: tenants,
   });
 });
-
-module.exports = {
-  getTenant,
-  updateTenant
-};

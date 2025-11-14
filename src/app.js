@@ -114,7 +114,7 @@ app.get('/', (req, res) => {
     documentation: '/api-docs',
     endpoints: {
       auth: `${API_VERSION}/auth`,
-      tenant: `${API_VERSION}/tenant/:tenantId`,
+      tenant: `${API_VERSION}/tenant/by-client/:clientId`,
       clients: `${API_VERSION}/clients/:tenantId`,
       projects: `${API_VERSION}/projects/:tenantId/:clientId`,
       tasks: `${API_VERSION}/tasks/:tenantId/:clientId/:projectId`,
@@ -137,7 +137,7 @@ app.all('*', (req, res) => {
       `POST ${API_VERSION}/auth/login`,
       `POST ${API_VERSION}/auth/logout`,
       `GET ${API_VERSION}/auth/me`,
-      `GET ${API_VERSION}/tenant/:tenantId`,
+      `GET ${API_VERSION}/tenant/by-client/:clientId`,
       `GET ${API_VERSION}/clients/:tenantId`,
       `GET ${API_VERSION}/projects/:tenantId/:clientId`,
       `GET ${API_VERSION}/tasks/:tenantId/:clientId/:projectId`,
