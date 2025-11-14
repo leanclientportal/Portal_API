@@ -1,11 +1,11 @@
 const express = require('express');
+const multer = require('multer');
 const {
   getClients,
   getClientById,
   createClient,
   updateClient,
-  deleteClient,
-  upload
+  deleteClient
 } = require('../controllers/clientController');
 const {
   validate,
@@ -17,6 +17,9 @@ const {
 const Joi = require('joi');
 
 const router = express.Router();
+
+// Configure Multer for in-memory storage
+const upload = multer({ storage: multer.memoryStorage() });
 
 const paramSchemaList = Joi.object({
   tenantId: objectIdSchema.required()
@@ -39,17 +42,20 @@ router.route('/:tenantId')
     createClient
   );
 
-router.route('/:clientId')
+router.route('/:tenantId/:clientId') // Modified route to include tenantId
   .get(
-    validateParams(paramSchemaDetail),
+    validateParams(Joi.object({ tenantId: objectIdSchema.required(), clientId: objectIdSchema.required() })),
     getClientById
   )
   .put(
-    validateParams(paramSchemaDetail),
+    validateParams(Joi.object({ tenantId: objectIdSchema.required(), clientId: objectIdSchema.required() })),
     upload.single('profile'),
     validate(validationSchemas.client.update),
     updateClient
   )
-  .delete(validateParams(paramSchemaDetail), deleteClient);
+  .delete(
+    validateParams(Joi.object({ tenantId: objectIdSchema.required(), clientId: objectIdSchema.required() })),
+    deleteClient
+  );
 
 module.exports = router;
