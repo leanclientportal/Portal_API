@@ -6,7 +6,7 @@ module.exports = {
 
   // Gmail configuration
   GMAIL_USER: 'leanclientportal@gmail.com',
-  GMAIL_PASS: 'Pa$$Word@123',
+  GMAIL_PASS: 'lkbwnbxpegoubjko',
 
   // JWT configuration
   JWT_SECRET: 'client-portal-secret',
@@ -19,7 +19,7 @@ module.exports = {
       service: 'gmail',
       auth: {
         user: 'leanclientportal@gmail.com',
-        pass: 'Pa$$Word@123'
+        pass: 'lkbwnbxpegoubjko'
       }
     }
   }
