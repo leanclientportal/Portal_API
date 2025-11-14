@@ -42,21 +42,18 @@ const validationSchemas = {
   // Client validation
   client: {
     create: Joi.object({
-      tenantId: objectIdSchema.optional(),
       name: Joi.string().required().min(2).max(100),
       email: Joi.string().email().required(),
       phone: Joi.string().min(7).max(20),
       isActive: Joi.boolean(),
-      profileImageUrl: Joi.string().uri(),
-      profileImageUrl: Joi.string()
+      profileImageUrl: Joi.string().uri().optional(),
     }),
     update: Joi.object({
       name: Joi.string().min(2).max(100),
       email: Joi.string().email(),
       phone: Joi.string().min(7).max(20),
       isActive: Joi.boolean(),
-      profileImageUrl: Joi.string().uri(),
-      profileImageUrl: Joi.string()
+      profileImageUrl: Joi.string().uri().optional(),
     })
   },
 
@@ -191,12 +188,16 @@ const validationSchemas = {
     }),
     verifyOtp: Joi.object({
       email: Joi.string().email().required().messages({ 'string.email': 'Enter a valid email' }),
-      otp: Joi.string().length(6).required().messages({ 'string.length': 'Enter a valid 6-digit OTP' })
+      otp: Joi.string().length(6).required().messages({ 'string.length': 'Enter a valid 6-digit OTP' }),
+      name: Joi.string().min(2).max(200).optional(),
+      phone: Joi.string().min(7).max(20).optional(),
+      activeProfile: Joi.string().valid('client', 'tenant').optional(),
+      activeProfileId: objectIdSchema.optional(), // Will be dynamically set for client creation
     }),
     register: Joi.object({
       email: Joi.string().email().required().messages({ 'string.email': 'Enter a valid email' }),
       phone: Joi.string().optional(),
-      password: Joi.string().min(6).required().messages({ 'string.min': 'Password must be at least 6 characters long' }),
+      // password: Joi.string().min(6).required().messages({ 'string.min': 'Password must be at least 6 characters long' }), // Removed password requirement
       activeProfile: Joi.string().valid('client', 'tenant').default('client')
     }),
     login: Joi.object({

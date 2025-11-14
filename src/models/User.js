@@ -4,7 +4,7 @@ const bcrypt = require('bcrypt');
 const credentialSchema = new mongoose.Schema({
   password: {
     type: String,
-    required: true,
+    required: false, // Changed to false
     minlength: 6,
     select: false // prevent password from being returned in queries by default
   },
@@ -46,13 +46,11 @@ const userSchema = new mongoose.Schema({
 
 // Hash password before saving
 userSchema.pre('save', async function (next) {
-  // Only hash the password if it has been modified (or is new)
-  if (!this.isModified('credential.password')) {
-    return next();
+  // Only hash the password if it has been modified (or is new) AND it exists
+  if (this.credential && this.isModified('credential.password') && this.credential.password) {
+    // Generate a salt and hash the password in one step
+    this.credential.password = await bcrypt.hash(this.credential.password, 10);
   }
-  
-  // Generate a salt and hash the password in one step
-  this.credential.password = await bcrypt.hash(this.credential.password, 10);
   next();
 });
 

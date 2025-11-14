@@ -1,6 +1,8 @@
 const Client = require('../models/Client');
 const Project = require('../models/Project');
 const TenantClientMapping = require('../models/TenantClientMapping');
+const User = require('../models/User'); // Added User model import
+const UserTenantClientMapping = require('../models/UserTenantClientMapping'); // Added UserTenantClientMapping model import
 const asyncHandler = require('../middlewares/asyncHandler');
 
 // @desc    Get all clients for a tenant
@@ -76,30 +78,51 @@ const getClientById = asyncHandler(async (req, res) => {
 // @access  Private
 const createClient = asyncHandler(async (req, res) => {
   const { tenantId } = req.params;
-  const { name, email, phone, profileImageUrl } = req.body;
+  const { name, email, phone, profileImageUrl } = req.body; // Added password
 
-  if (!name || !email) {
+  if (!name || !email || !phone) { // Added password to validation
     res.status(400);
-    throw new Error('Please provide name and email');
+    throw new Error('Please provide name, email, and phone');
   }
 
   // Check if a client with this email already exists and is mapped to this tenant
-  const existingClient = await Client.findOne({ email });
-  if (existingClient) {
-    const existingMapping = await TenantClientMapping.findOne({ tenantId, clientId: existingClient._id });
+  let client = await Client.findOne({ email });
+  if (client) {
+    const existingMapping = await TenantClientMapping.findOne({ tenantId, clientId: client._id });
     if (existingMapping) {
       res.status(400);
       throw new Error('A client with this email already exists and is mapped to this tenant');
     }
+  } else {
+    // Create the new client if not existing
+    client = await Client.create({ name, email, phone, profileImageUrl });
   }
 
-  // Create the new client
-  const client = await Client.create({ name, email, phone, profileImageUrl });
-
-  // Create the mapping between the tenant and the new client
+  // Create the mapping between the tenant and the new/existing client
   await TenantClientMapping.create({
     tenantId,
     clientId: client._id,
+  });
+
+  // Check if a user with this email already exists
+  let user = await User.findOne({ email });
+
+  if (!user) {
+    // Create the new user
+    user = await User.create({
+      name,
+      email,
+      activeProfile: 'client',
+      activeProfileId: client._id, // Link to the newly created client
+    });
+  }
+
+  // Create mapping between user, tenant, and client
+  await UserTenantClientMapping.create({
+    userId: user._id,
+    tenantId,
+    clientId: client._id,
+    role: 'client', // Assuming 'client' role for this mapping
   });
 
   res.status(201).json({ success: true, message: 'Client created and mapped successfully.', data: client });

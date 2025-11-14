@@ -15,15 +15,16 @@ exports.sendOtp = asyncHandler(async (req, res) => {
     return res.status(400).json({ message: 'Email is required' });
   }
 
-  const user = await User.findOne({ email });
-  if (user) {
-    return res.status(400).json({ message: 'A user with this email already exists' });
-  }
+  // Allow sending OTP even if user exists for login/password reset flows
+  // const user = await User.findOne({ email });
+  // if (user) {
+  //   return res.status(400).json({ message: 'A user with this email already exists' });
+  // }
 
   const otp = Math.floor(100000 + Math.random() * 900000).toString();
 
   await Otp.findOneAndUpdate({ identifier: email },
-    { identifier: email, otp },
+    { identifier: email, otp, expiresAt: new Date(Date.now() + 10 * 60 * 1000) }, // OTP valid for 10 minutes
     { upsert: true, new: true, setDefaultsOnInsert: true }
   );
 
@@ -33,58 +34,93 @@ exports.sendOtp = asyncHandler(async (req, res) => {
 });
 
 exports.verifyOtp = asyncHandler(async (req, res) => {
-  const { email, otp } = req.body;
+  const { email, otp, name, phone, activeProfile = 'client' } = req.body;
 
   if (!email || !otp) {
     return res.status(400).json({ message: 'Email and OTP are required' });
   }
 
-  const otpData = await Otp.findOne({ identifier: email, otp });
+  const otpData = await Otp.findOne({ identifier: email, otp, expiresAt: { $gt: new Date() } });
 
   if (!otpData) {
     return res.status(400).json({ message: 'Invalid or expired OTP' });
   }
 
-  res.status(200).json({ message: 'OTP verified successfully. You can now complete your registration.' });
+  // OTP is verified, delete it
+  await Otp.deleteOne({ _id: otpData._id });
+
+  let user = await User.findOne({ email });
+  let masterId;
+
+  if (!user) {
+    // User does not exist, proceed with registration
+    if (!name) {
+        return res.status(400).json({ message: 'Name is required for new user registration' });
+    }
+
+    if (activeProfile === 'client') {
+      let client = await Client.findOne({ email });
+      if (!client) {
+        client = new Client({ name, email, phone });
+        await client.save();
+      }
+      masterId = client._id;
+    } else if (activeProfile === 'tenant') {
+      let tenant = await Tenant.findOne({ email });
+      if (!tenant) {
+        tenant = new Tenant({ companyName: name, email, phone });
+        await tenant.save();
+      }
+      masterId = tenant._id;
+    } else {
+      return res.status(400).json({ message: 'Invalid active profile provided' });
+    }
+
+    user = new User({
+      email,
+      name,
+      phone,
+      activeProfile,
+      activeProfileId: masterId,
+    });
+    await user.save();
+
+    const newMapping = new UserTenantClientMapping({
+      userId: user._id,
+      masterId,
+      role: activeProfile,
+    });
+    await newMapping.save();
+
+  } else {
+    // User exists, check if activeProfile and activeProfileId are consistent
+    // If user exists, we assume this is a login attempt or they are re-verifying.
+    // We don't create new client/tenant or user entries here if they already exist.
+    // We should ensure a mapping exists for the current activeProfile and activeProfileId if provided.
+    let mapping = await UserTenantClientMapping.findOne({ userId: user._id, masterId: user.activeProfileId, role: user.activeProfile });
+    if (!mapping) {
+        // This scenario might happen if a user has an account but no mapping for their active profile.
+        // For now, we'll log it and proceed, but a more robust solution might require user intervention.
+        console.warn(`User ${user.email} has no mapping for activeProfile: ${user.activeProfile}, activeProfileId: ${user.activeProfileId}`);
+    }
+  }
+
+  // Generate JWT token
+  const token = jwt.sign({ id: user._id }, config.JWT_SECRET, { expiresIn: config.JWT_EXPIRES_IN });
+
+  res.status(200).json({
+    success: true,
+    message: 'OTP verified and user processed successfully.',
+    token,
+    userId: user._id,
+    activeProfile: user.activeProfile,
+    activeProfileId: user.activeProfileId,
+  });
 });
 
 exports.register = asyncHandler(async (req, res) => {
-  const { email, password, activeProfile = 'client' } = req.body;
-
-  const userExists = await User.findOne({ email });
-  if (userExists) {
-    return res.status(400).json({ message: 'User already exists' });
-  }
-
-  let masterId;
-  if (activeProfile === 'client') {
-    const newClient = new Client({ name: email.split('@')[0], email });
-    await newClient.save();
-    masterId = newClient._id;
-  } else if (activeProfile === 'tenant') {
-    const newTenant = new Tenant({ companyName: email.split('@')[0], email });
-    await newTenant.save();
-    masterId = newTenant._id;
-  }
-
-  const newUser = new User({
-    email,
-    credential: { password },
-    activeProfile,
-    activeProfileId: masterId
-  });
-
-  await newUser.save();
-
-  const newMapping = new UserTenantClientMapping({
-    userId: newUser._id,
-    masterId,
-    role: activeProfile
-  });
-
-  await newMapping.save();
-
-  res.status(200).json({ message: 'User registered successfully. Please log in.' });
+  // This endpoint is now redundant. Registration happens via verifyOtp.
+  res.status(400).json({ message: 'Registration is now handled via the /verify-otp endpoint.' });
 });
 
 exports.login = asyncHandler(async (req, res) => {
