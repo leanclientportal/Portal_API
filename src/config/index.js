@@ -10,5 +10,17 @@ module.exports = {
 
   // JWT configuration
   JWT_SECRET: 'client-portal-secret',
-  JWT_EXPIRES_IN: '1d'
+  JWT_EXPIRES_IN: '1d',
+
+  // Email transport configuration
+  email: {
+    from: 'leanclientportal@gmail.com',
+    transport: {
+      service: 'gmail',
+      auth: {
+        user: 'leanclientportal@gmail.com',
+        pass: 'Pa$$Word@123'
+      }
+    }
+  }
 };

@@ -7,6 +7,7 @@ const UserTenantClientMapping = require('../models/UserTenantClientMapping');
 const asyncHandler = require('../middlewares/asyncHandler');
 const config = require('../config');
 const { generateNumericOTP } = require('../utils/otpGenerator');
+const { sendEmail } = require('../services/emailService');
 
 exports.sendOtp = asyncHandler(async (req, res) => {
   const { email, type } = req.body;
@@ -30,7 +31,18 @@ exports.sendOtp = asyncHandler(async (req, res) => {
     { upsert: true, new: true, setDefaultsOnInsert: true }
   );
 
-  console.log(`OTP for ${email} is ${otp}`);
+  try {
+    await sendEmail(
+      email,
+      'Your OTP for Lean Client Portal',
+      `Your OTP is: ${otp}`,
+      `<p>Your OTP is: <strong>${otp}</strong></p>`
+    );
+  } catch (error) {
+    console.error('Error sending OTP email:', error);
+    return res.status(500).json({ message: 'Failed to send OTP email.' });
+  }
+
   res.status(200).json({ message: 'OTP sent to your email. Please verify to continue.' });
 });
 
