@@ -22,7 +22,7 @@ const clientSchema = new mongoose.Schema({
     type: Boolean,
     default: true
   },
-  profileUrl: {
+  profileImageUrl: {
     type: String,
   }
 }, {

@@ -17,7 +17,7 @@ const validationSchemas = {
       logoUrl: Joi.string().uri(),
       plan: objectIdSchema,
       whatsappEnabled: Joi.boolean(),
-      profileUrl: Joi.string().uri(),
+      profileImageUrl: Joi.string().uri(),
       credential: Joi.object({
         password: Joi.string().min(6),
         passwordSalt: Joi.string(),
@@ -35,12 +35,7 @@ const validationSchemas = {
       logoUrl: Joi.string().uri(),
       plan: objectIdSchema,
       whatsappEnabled: Joi.boolean(),
-      profileUrl: Joi.string().uri(),
-      credential: Joi.object({
-        password: Joi.string().min(6),
-        passwordSalt: Joi.string(),
-        createdDate: Joi.date()
-      })
+      profileImageUrl: Joi.string().uri(),
     })
   },
 
@@ -52,7 +47,7 @@ const validationSchemas = {
       email: Joi.string().email().required(),
       phone: Joi.string().min(7).max(20),
       isActive: Joi.boolean(),
-      profileUrl: Joi.string().uri(),
+      profileImageUrl: Joi.string().uri(),
       profileImageUrl: Joi.string()
     }),
     update: Joi.object({
@@ -60,7 +55,7 @@ const validationSchemas = {
       email: Joi.string().email(),
       phone: Joi.string().min(7).max(20),
       isActive: Joi.boolean(),
-      profileUrl: Joi.string().uri(),
+      profileImageUrl: Joi.string().uri(),
       profileImageUrl: Joi.string()
     })
   },

@@ -76,7 +76,7 @@ const getClientById = asyncHandler(async (req, res) => {
 // @access  Private
 const createClient = asyncHandler(async (req, res) => {
   const { tenantId } = req.params;
-  const { name, email, phone, profileUrl } = req.body;
+  const { name, email, phone, profileImageUrl } = req.body;
 
   if (!name || !email) {
     res.status(400);
@@ -94,7 +94,7 @@ const createClient = asyncHandler(async (req, res) => {
   }
 
   // Create the new client
-  const client = await Client.create({ name, email, phone, profileUrl });
+  const client = await Client.create({ name, email, phone, profileImageUrl });
 
   // Create the mapping between the tenant and the new client
   await TenantClientMapping.create({
