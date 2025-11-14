@@ -9,21 +9,27 @@ const {
   switchAccount,
   getAccounts
 } = require('../controllers/userAuthController');
-const { validate, validationSchemas } = require('../middlewares/validation');
+const {
+  validateRequest,
+  sendOtpValidationRules,
+  verifyOtpValidationRules,
+} = require('../middlewares/validators/userAuthValidator');
 
 // These routes are now open and do not require authentication
 
-// Step 1: Send OTP for registration
-router.post('/send-otp', validate(validationSchemas.auth.sendOtp), sendOtp);
+// Step 1: Send OTP for registration or login
+router.post('/send-otp', sendOtpValidationRules(), validateRequest, sendOtp);
 
 // Step 2: Verify OTP
-router.post('/verify-otp', validate(validationSchemas.auth.verifyOtp), verifyOtp);
+router.post('/verify-otp', verifyOtpValidationRules(), validateRequest, verifyOtp);
 
 // Step 3: Register a new user after OTP verification
-router.post('/register', validate(validationSchemas.auth.register), register);
+// This route is now effectively deprecated and handled by /verify-otp
+router.post('/register', register);
 
 // Login a user
-router.post('/login', validate(validationSchemas.auth.login), login);
+// This route is now effectively deprecated and handled by /verify-otp
+router.post('/login', login);
 
 // Logout a user (requires authentication)
 const { protect } = require('../middlewares/auth');
