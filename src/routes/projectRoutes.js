@@ -27,9 +27,8 @@ const paramSchemaDetail = Joi.object({
   projectId: objectIdSchema.required()
 });
 
-router.route('/')
+router.route('/:activeProfile/:activeProfileId')
   .get(
-    protect,
     validateQuery(validationSchemas.pagination),
     getProjects
   );

@@ -3,7 +3,7 @@ const asyncHandler = require('../middlewares/asyncHandler');
 const TenantClientMapping = require('../models/TenantClientMapping');
 
 // @desc    Get all projects
-// @route   GET /api/v1/projects
+// @route   GET /api/v1/projects/:activeProfile/:activeProfileId
 // @access  Private
 const getProjects = asyncHandler(async (req, res) => {
   const { page = 1, limit = 20, search, status, activeProfile, activeProfileId } = req.query;
