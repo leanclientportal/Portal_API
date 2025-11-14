@@ -94,7 +94,11 @@ exports.login = asyncHandler(async (req, res) => {
   res.status(400).json({ message: 'Login is now handled via the /send-otp and /verify-otp endpoints with type login.' });
 });
 
-
+exports.logout = asyncHandler(async (req, res) => {
+  // For JWT, logout is typically handled client-side by deleting the token.
+  // This endpoint is here to provide a standard RESTful logout flow.
+  res.status(200).json({ success: true, message: 'Logged out successfully' });
+});
 
 exports.switchAccount = asyncHandler(async (req, res) => {
   const { activeProfile, masterId } = req.body;

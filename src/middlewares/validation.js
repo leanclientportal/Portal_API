@@ -184,20 +184,21 @@ const validationSchemas = {
   // Auth validation
   auth: {
     sendOtp: Joi.object({
-      email: Joi.string().email().required().messages({ 'string.email': 'Enter a valid email' })
+      email: Joi.string().email().required().messages({ 'string.email': 'Enter a valid email' }),
+      type: Joi.string().valid('registration', 'login').required()
     }),
     verifyOtp: Joi.object({
       email: Joi.string().email().required().messages({ 'string.email': 'Enter a valid email' }),
       otp: Joi.string().length(6).required().messages({ 'string.length': 'Enter a valid 6-digit OTP' }),
-      name: Joi.string().min(2).max(200).optional(),
+      type: Joi.string().valid('registration', 'login').required(),
+      name: Joi.string().min(2).max(200).when('type', { is: 'registration', then: Joi.required() }),
       phone: Joi.string().min(7).max(20).optional(),
       activeProfile: Joi.string().valid('client', 'tenant').optional(),
-      activeProfileId: objectIdSchema.optional(), // Will be dynamically set for client creation
+      activeProfileId: objectIdSchema.optional(),
     }),
     register: Joi.object({
       email: Joi.string().email().required().messages({ 'string.email': 'Enter a valid email' }),
       phone: Joi.string().optional(),
-      // password: Joi.string().min(6).required().messages({ 'string.min': 'Password must be at least 6 characters long' }), // Removed password requirement
       activeProfile: Joi.string().valid('client', 'tenant').default('client')
     }),
     login: Joi.object({
