@@ -116,14 +116,15 @@ const verifyOtp = asyncHandler(async (req, res) => {
 
 const createProfile = asyncHandler(async (req, res) => {
   const { name, email, profileType } = req.body;
+  const { userId } = req.params;
 
   if (!name || !email || !profileType) {
     return res.status(400).json({ message: 'Name, email, and profileType are required' });
   }
 
-  let user = await User.findOne({ email });
+  let user = await User.findOne({ _id: userId });
 
-  if (user) {
+  if (!user) {
     return res.status(400).json({ message: 'User with this email already exists.' });
   }
 
@@ -138,33 +139,17 @@ const createProfile = asyncHandler(async (req, res) => {
 
   await profile.save();
 
-  const newUser = new User({
-    name,
-    email,
-    activeProfile: profileType,
-    activeProfileId: profile._id,
-    status: 'active',
-  });
-
-  await newUser.save();
-
   const newMapping = new UserTenantClientMapping({
-    userId: newUser._id,
+    userId: userId,
     masterId: profile._id,
     role: profileType,
   });
 
   await newMapping.save();
 
-  const token = jwt.sign({ id: newUser._id }, config.JWT_SECRET, { expiresIn: config.JWT_EXPIRES_IN });
-
   res.status(201).json({
     success: true,
     message: 'User profile created successfully.',
-    token,
-    userId: newUser._id,
-    activeProfile: newUser.activeProfile,
-    activeProfileId: newUser.activeProfileId,
   });
 });
 
