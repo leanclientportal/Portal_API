@@ -7,7 +7,7 @@ const TenantClientMapping = require('../models/TenantClientMapping');
 // @access  Private
 const getProjects = asyncHandler(async (req, res) => {
   const { activeProfile, activeProfileId } = req.params;
-  const { page = 1, limit = 20, search, status} = req.query;
+  const { page = 1, limit = 20, search, status } = req.query;
   const query = { isActive: true };
 
   if (!activeProfile || !activeProfileId) {
@@ -71,7 +71,10 @@ const createProject = asyncHandler(async (req, res) => {
   const { tenantId, clientId } = req.params;
 
   const project = await Project.create({
-    ...req.body,
+    name: req.body.name,
+    description: req.body.description,
+    status: req.body.status,
+    isActive: req.body.isActive,
     tenantId,
     clientId
   });
