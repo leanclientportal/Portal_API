@@ -42,7 +42,7 @@ const getProjects = asyncHandler(async (req, res) => {
   // Execute query with pagination
   const projects = await Project.find(query)
     .populate('clientId', 'name email company')
-    .populate('tenantId', 'name email company')
+    .populate('tenantId', 'companyName email company')
     .select('-__v')
     .sort({ createdAt: -1 })
     .limit(limit * 1)
