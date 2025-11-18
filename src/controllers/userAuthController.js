@@ -115,26 +115,26 @@ const verifyOtp = asyncHandler(async (req, res) => {
 });
 
 const createProfile = asyncHandler(async (req, res) => {
-  const { name, email, profileType } = req.body;
+  const { name, email, profileType, phone, profileImageUrl } = req.body;
   const { userId } = req.params;
 
   if (!name || !email || !profileType) {
     return res.status(400).json({ message: 'Name, email, and profileType are required' });
   }
 
-  let user = await User.findOne({ _id: userId });
+  const user = await User.findById(userId);
 
   if (!user) {
-    return res.status(400).json({ message: 'User with this email already exists.' });
+    return res.status(404).json({ message: 'User not found' });
   }
 
   let profile;
   if (profileType === 'tenant') {
-    profile = new Tenant({ companyName: name, email });
+    profile = new Tenant({ companyName: name, email, phone, profileImageUrl });
   } else if (profileType === 'client') {
-    profile = new Client({ name, email });
+    profile = new Client({ name, email, phone, profileImageUrl });
   } else {
-    return res.status(400).json({ message: 'Invalid profileType. Must be \'tenant\' or \'client\'.' });
+    return res.status(400).json({ message: "Invalid profileType. Must be 'tenant' or 'client'." });
   }
 
   await profile.save();
@@ -150,6 +150,7 @@ const createProfile = asyncHandler(async (req, res) => {
   res.status(201).json({
     success: true,
     message: 'User profile created successfully.',
+    data: profile
   });
 });
 
@@ -240,7 +241,9 @@ const getAccounts = asyncHandler(async (req, res) => {
         type: 'client',
         id: client._id,
         name: client.name,
-        email: client.email
+        email: client.email,
+        phone: client.phone,
+        profileImageUrl: client.profileImageUrl
       };
     } else if (mapping.role === 'tenant') {
       const tenant = await Tenant.findById(mapping.masterId);
@@ -248,7 +251,9 @@ const getAccounts = asyncHandler(async (req, res) => {
         type: 'tenant',
         id: tenant._id,
         name: tenant.companyName,
-        email: tenant.email
+        email: tenant.email,
+        phone: tenant.phone,
+        profileImageUrl: tenant.profileImageUrl
       };
     }
   }));

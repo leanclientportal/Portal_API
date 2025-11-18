@@ -28,7 +28,7 @@ const tenantSchema = new mongoose.Schema({
   customDomain: {
     type: String
   },
-  logoUrl: {
+  profileImageUrl: {
     type: String
   },
   plan: {
