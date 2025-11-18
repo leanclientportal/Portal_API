@@ -42,6 +42,7 @@ const getProjects = asyncHandler(async (req, res) => {
   // Execute query with pagination
   const projects = await Project.find(query)
     .populate('clientId', 'name email company')
+    .populate('tenantId', 'name email company')
     .select('-__v')
     .sort({ createdAt: -1 })
     .limit(limit * 1)
@@ -79,7 +80,7 @@ const createProject = asyncHandler(async (req, res) => {
     clientId
   });
 
-  await project.populate('clientId', 'name email company');
+  await project.save();
 
   res.status(201).json({
     success: true,
@@ -97,7 +98,7 @@ const getProject = asyncHandler(async (req, res) => {
   const project = await Project.findOne({
     _id: projectId,
     isActive: true
-  }).populate('clientId', 'name email company');
+  }).populate('clientId', 'name email company').populate('tenantId', 'name email company');
 
   if (!project) {
     return res.status(404).json({
@@ -126,7 +127,7 @@ const updateProject = asyncHandler(async (req, res) => {
       new: true,
       runValidators: true
     }
-  ).populate('clientId', 'name email company');
+  ).populate('clientId', 'name email company').populate('tenantId', 'name email company');
 
   if (!project) {
     return res.status(404).json({
