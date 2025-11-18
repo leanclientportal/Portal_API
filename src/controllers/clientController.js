@@ -1,9 +1,11 @@
+const crypto = require('crypto');
 const Client = require('../models/Client');
 const Project = require('../models/Project');
 const TenantClientMapping = require('../models/TenantClientMapping');
-const User = require('../models/User'); // Added User model import
-const UserTenantClientMapping = require('../models/UserTenantClientMapping'); // Added UserTenantClientMapping model import
+const User = require('../models/User');
+const UserTenantClientMapping = require('../models/UserTenantClientMapping');
 const asyncHandler = require('../middlewares/asyncHandler');
+const { sendEmail } = require('../services/emailService');
 
 // @desc    Get all clients for a tenant
 // @route   GET /api/v1/clients/:tenantId
@@ -12,7 +14,6 @@ const getClients = asyncHandler(async (req, res) => {
   const { tenantId } = req.params;
   const { page = 1, limit = 20, search, status } = req.query;
 
-  // Find all client IDs associated with the tenant
   const clientMappings = await TenantClientMapping.find({ tenantId }).select('clientId');
   const clientIds = clientMappings.map(mapping => mapping.clientId);
 
@@ -56,7 +57,6 @@ const getClients = asyncHandler(async (req, res) => {
 const getClientById = asyncHandler(async (req, res) => {
   const { tenantId, clientId } = req.params;
 
-  // Verify that the client is mapped to the tenant
   const mapping = await TenantClientMapping.findOne({ tenantId, clientId });
   if (!mapping) {
     res.status(404);
@@ -78,14 +78,13 @@ const getClientById = asyncHandler(async (req, res) => {
 // @access  Private
 const createClient = asyncHandler(async (req, res) => {
   const { tenantId } = req.params;
-  const { name, email, phone, profileImageUrl } = req.body; // Added password
+  const { name, email, phone, profileImageUrl } = req.body;
 
-  if (!name || !email || !phone) { // Added password to validation
+  if (!name || !email || !phone) {
     res.status(400);
     throw new Error('Please provide name, email, and phone');
   }
 
-  // Check if a client with this email already exists and is mapped to this tenant
   let client = await Client.findOne({ email });
   if (client) {
     const existingMapping = await TenantClientMapping.findOne({ tenantId, clientId: client._id });
@@ -94,37 +93,52 @@ const createClient = asyncHandler(async (req, res) => {
       throw new Error('A client with this email already exists and is mapped to this tenant');
     }
   } else {
-    // Create the new client if not existing
     client = await Client.create({ name, email, phone, profileImageUrl });
   }
 
-  // Create the mapping between the tenant and the new/existing client
   await TenantClientMapping.create({
     tenantId,
     clientId: client._id,
   });
 
-  // Check if a user with this email already exists
   let user = await User.findOne({ email });
 
   if (!user) {
-    // Create the new user
+    const invitationToken = crypto.randomBytes(32).toString('hex');
     user = await User.create({
       name,
       email,
       activeProfile: 'client',
-      activeProfileId: client._id, // Link to the newly created client
+      activeProfileId: client._id,
+      status: 'pending',
+      invitationToken,
+    });
+
+    await UserTenantClientMapping.create({
+      userId: user._id,
+      masterId: client._id,
+      role: 'client',
+    });
+
+    const invitationLink = `http://localhost:3000/verify-invitation?token=${invitationToken}`;
+    const subject = 'You have been invited to the Lean Client Portal';
+    const text = `Hello ${name},\n\nYou have been invited to the Lean Client Portal. Please click the following link to set up your account:\n\n${invitationLink}`;
+    const html = `<p>Hello ${name},</p><p>You have been invited to the Lean Client Portal. Please click the button below to set up your account:</p><a href="${invitationLink}">Set Up Account</a>`;
+
+    try {
+      await sendEmail(email, subject, text, html);
+    } catch (error) {
+      console.error('Error sending invitation email:', error);
+    }
+  } else {
+    await UserTenantClientMapping.create({
+      userId: user._id,
+      masterId: client._id,
+      role: 'client',
     });
   }
 
-  // Create mapping between user, tenant, and client
-  await UserTenantClientMapping.create({
-    userId: user._id,
-    masterId: client._id,
-    role: 'client', // Assuming 'client' role for this mapping
-  });
-
-  res.status(201).json({ success: true, message: 'Client created and mapped successfully.', data: client });
+  res.status(201).json({ success: true, message: 'Client created and invitation sent successfully.', data: client });
 });
 
 // @desc    Update client
@@ -133,7 +147,6 @@ const createClient = asyncHandler(async (req, res) => {
 const updateClient = asyncHandler(async (req, res) => {
   const { tenantId, clientId } = req.params;
 
-  // Verify that the client is mapped to the tenant
   const mapping = await TenantClientMapping.findOne({ tenantId, clientId });
   if (!mapping) {
     res.status(404);
@@ -156,7 +169,6 @@ const updateClient = asyncHandler(async (req, res) => {
 const deleteClient = asyncHandler(async (req, res) => {
   const { tenantId, clientId } = req.params;
 
-  // Verify that the client is mapped to the tenant
   const mapping = await TenantClientMapping.findOne({ tenantId, clientId });
   if (!mapping) {
     res.status(404);

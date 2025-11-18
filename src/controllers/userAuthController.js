@@ -9,7 +9,7 @@ const config = require('../config');
 const { generateNumericOTP } = require('../utils/otpGenerator');
 const { sendEmail } = require('../services/emailService');
 
-exports.sendOtp = asyncHandler(async (req, res) => {
+const sendOtp = asyncHandler(async (req, res) => {
   const { email, type } = req.body;
 
   if (!email || !type) {
@@ -46,7 +46,7 @@ exports.sendOtp = asyncHandler(async (req, res) => {
   res.status(200).json({ message: 'OTP sent to your email. Please verify to continue.' });
 });
 
-exports.verifyOtp = asyncHandler(async (req, res) => {
+const verifyOtp = asyncHandler(async (req, res) => {
   const { email, otp, name, phone, type, activeProfile = 'client' } = req.body;
 
   if (!email || !otp || !type) {
@@ -114,19 +114,99 @@ exports.verifyOtp = asyncHandler(async (req, res) => {
   }
 });
 
-exports.register = asyncHandler(async (req, res) => {
+const createProfile = asyncHandler(async (req, res) => {
+  const { name, email, profileType } = req.body;
+
+  if (!name || !email || !profileType) {
+    return res.status(400).json({ message: 'Name, email, and profileType are required' });
+  }
+
+  let user = await User.findOne({ email });
+
+  if (user) {
+    return res.status(400).json({ message: 'User with this email already exists.' });
+  }
+
+  let profile;
+  if (profileType === 'tenant') {
+    profile = new Tenant({ companyName: name, email });
+  } else if (profileType === 'client') {
+    profile = new Client({ name, email });
+  } else {
+    return res.status(400).json({ message: 'Invalid profileType. Must be \'tenant\' or \'client\'.' });
+  }
+
+  await profile.save();
+
+  const newUser = new User({
+    name,
+    email,
+    activeProfile: profileType,
+    activeProfileId: profile._id,
+    status: 'active',
+  });
+
+  await newUser.save();
+
+  const newMapping = new UserTenantClientMapping({
+    userId: newUser._id,
+    masterId: profile._id,
+    role: profileType,
+  });
+
+  await newMapping.save();
+
+  const token = jwt.sign({ id: newUser._id }, config.JWT_SECRET, { expiresIn: config.JWT_EXPIRES_IN });
+
+  res.status(201).json({
+    success: true,
+    message: 'User profile created successfully.',
+    token,
+    userId: newUser._id,
+    activeProfile: newUser.activeProfile,
+    activeProfileId: newUser.activeProfileId,
+  });
+});
+
+const verifyInvitation = asyncHandler(async (req, res) => {
+  const { token } = req.query;
+
+  if (!token) {
+    return res.status(400).json({ message: 'Invitation token is required' });
+  }
+
+  const user = await User.findOne({
+    invitationToken: token,
+    status: 'pending'
+  });
+
+  if (!user) {
+    return res.status(400).json({ message: 'Invalid or expired invitation token.' });
+  }
+
+  user.status = 'active';
+  user.invitationToken = undefined;
+  await user.save();
+
+  res.status(200).json({
+    success: true,
+    message: 'Invitation verified successfully. You can now log in.'
+  });
+});
+
+const register = asyncHandler(async (req, res) => {
   res.status(400).json({ message: 'Registration is now handled via the /verify-otp endpoint with type registration.' });
 });
 
-exports.login = asyncHandler(async (req, res) => {
+const login = asyncHandler(async (req, res) => {
   res.status(400).json({ message: 'Login is now handled via the /send-otp and /verify-otp endpoints with type login.' });
 });
 
-exports.logout = asyncHandler(async (req, res) => {
+const logout = asyncHandler(async (req, res) => {
   res.status(200).json({ success: true, message: 'Logged out successfully' });
 });
 
-exports.switchAccount = asyncHandler(async (req, res) => {
+const switchAccount = asyncHandler(async (req, res) => {
   const { activeProfile, masterId } = req.body;
   const { userId } = req.params;
 
@@ -159,7 +239,7 @@ exports.switchAccount = asyncHandler(async (req, res) => {
   res.status(200).json({ token, userId: user._id, activeProfile: user.activeProfile, activeProfileId: user.activeProfileId });
 });
 
-exports.getAccounts = asyncHandler(async (req, res) => {
+const getAccounts = asyncHandler(async (req, res) => {
   const { userId } = req.params;
 
   const mappings = await UserTenantClientMapping.find({ userId });
@@ -190,3 +270,15 @@ exports.getAccounts = asyncHandler(async (req, res) => {
 
   res.status(200).json({ accounts });
 });
+
+module.exports = {
+  sendOtp,
+  verifyOtp,
+  createProfile,
+  verifyInvitation,
+  register,
+  login,
+  logout,
+  switchAccount,
+  getAccounts,
+};

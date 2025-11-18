@@ -35,6 +35,15 @@ const userSchema = new mongoose.Schema({
   },
   lastActiveDate: {
     type: Date
+  },
+  status: {
+    type: String,
+    enum: ['pending', 'active', 'inactive'],
+    default: 'pending'
+  },
+  invitationToken: {
+    type: String,
+    select: false
   }
 }, {
   timestamps: true,

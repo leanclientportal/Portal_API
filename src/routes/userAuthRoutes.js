@@ -5,7 +5,9 @@ const {
   verifyOtp,
   logout,
   switchAccount,
-  getAccounts
+  getAccounts,
+  verifyInvitation,
+  createProfile
 } = require('../controllers/userAuthController');
 const { validate, validationSchemas } = require('../middlewares/validation');
 
@@ -16,6 +18,12 @@ router.post('/send-otp', validate(validationSchemas.auth.sendOtp), sendOtp);
 
 // Step 2: Verify OTP and handle registration/login
 router.post('/verify-otp', validate(validationSchemas.auth.verifyOtp), verifyOtp);
+
+// Verify invitation
+router.get('/verify-invitation', verifyInvitation);
+
+// Create a new user profile
+router.post('/create-profile/:userId', createProfile);
 
 // Logout a user (requires authentication)
 const { protect } = require('../middlewares/auth');
