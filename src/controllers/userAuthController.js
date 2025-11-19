@@ -156,7 +156,7 @@ const createProfile = asyncHandler(async (req, res) => {
 
 const updateProfile = asyncHandler(async (req, res) => {
   const { userId, profileId } = req.params;
-  const { name, email, phone, profileImageUrl, activeProfile } = req.body;
+  const { name, email, phone, profileImageUrl, profileType } = req.body;
 
   const user = await User.findById(userId);
 
@@ -166,7 +166,7 @@ const updateProfile = asyncHandler(async (req, res) => {
 
   const updateFields = {};
   if (name !== undefined) {
-    if (activeProfile === 'tenant') {
+    if (profileType === 'tenant') {
       updateFields.companyName = name;
     } else {
       updateFields.name = name;
@@ -179,12 +179,12 @@ const updateProfile = asyncHandler(async (req, res) => {
   }
 
   let profile;
-  if (activeProfile === 'tenant') {
+  if (profileType === 'tenant') {
     profile = await Tenant.findByIdAndUpdate(profileId, updateFields, {
       new: true,
       runValidators: true,
     });
-  } else if (activeProfile === 'client') {
+  } else if (profileType === 'client') {
     profile = await Client.findByIdAndUpdate(profileId, updateFields, {
       new: true,
       runValidators: true,
