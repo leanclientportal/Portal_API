@@ -3,7 +3,9 @@ const User = require('../models/User');
 const Otp = require('../models/Otp');
 const Tenant = require('../models/Tenant');
 const Client = require('../models/Client');
+const Project = require('../models/Project');
 const UserTenantClientMapping = require('../models/UserTenantClientMapping');
+const TenantClientMapping = require('../models/TenantClientMapping');
 const asyncHandler = require('../middlewares/asyncHandler');
 const config = require('../config');
 const { generateNumericOTP } = require('../utils/otpGenerator');
@@ -202,6 +204,44 @@ const updateProfile = asyncHandler(async (req, res) => {
   });
 });
 
+const mergeProfiles = asyncHandler(async (req, res) => {
+  const { userId } = req.params;
+  const { sourceProfileId, targetProfileId, profileType } = req.body;
+
+  if (!sourceProfileId || !targetProfileId || !profileType) {
+    return res.status(400).json({ success: false, message: 'Source profile ID, target profile ID, and profile type are required.' });
+  }
+
+  if (sourceProfileId === targetProfileId) {
+    return res.status(400).json({ success: false, message: 'Source and target profile IDs cannot be the same.' });
+  }
+
+  const user = await User.findById(userId);
+  if (!user) {
+    return res.status(404).json({ success: false, message: 'User not found.' });
+  }
+
+  const targetMapping = await UserTenantClientMapping.findOne({ userId, masterId: targetProfileId, role: profileType });
+
+  if (!targetMapping) {
+    return res.status(404).json({ success: false, message: 'One or both profiles do not belong to the specified user or do not exist.' });
+  }
+
+  if (profileType === 'tenant') {
+    await TenantClientMapping.updateMany({ tenantId: targetProfileId }, { $set: { tenantId: sourceProfileId } });
+    await Project.updateMany({ tenantId: targetProfileId }, { $set: { tenantId: sourceProfileId } });
+    // await Tenant.findByIdAndDelete(sourceProfileId);
+  } else if (profileType === 'client') {
+    await TenantClientMapping.updateMany({ clientId: targetProfileId }, { $set: { clientId: sourceProfileId } });
+    await Project.updateMany({ clientId: targetProfileId }, { $set: { clientId: sourceProfileId } });
+    // await Client.findByIdAndDelete(sourceProfileId);
+  }
+
+  await UserTenantClientMapping.findByIdAndDelete(targetMapping._id);
+
+  res.status(200).json({ success: true, message: `Successfully merged profile ${sourceProfileId} into profile ${targetProfileId}.` });
+});
+
 const verifyInvitation = asyncHandler(async (req, res) => {
   const { token } = req.query;
 
@@ -314,6 +354,7 @@ module.exports = {
   verifyOtp,
   createProfile,
   updateProfile,
+  mergeProfiles,
   verifyInvitation,
   register,
   login,
