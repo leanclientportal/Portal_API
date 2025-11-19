@@ -130,7 +130,7 @@ const createProfile = asyncHandler(async (req, res) => {
 
   let profile;
   if (profileType === 'tenant') {
-    profile = new Tenant({ companyName: name, email, phone, profileImageUrl });
+    profile = new Tenant({ companyName: name, email, phone, profileImageUrl: profileImageUrl });
   } else if (profileType === 'client') {
     profile = new Client({ name, email, phone, profileImageUrl });
   } else {
@@ -151,6 +151,54 @@ const createProfile = asyncHandler(async (req, res) => {
     success: true,
     message: 'User profile created successfully.',
     data: profile
+  });
+});
+
+const updateProfile = asyncHandler(async (req, res) => {
+  const { userId, profileId } = req.params;
+  const { name, email, phone, profileImageUrl, activeProfile } = req.body;
+
+  const user = await User.findById(userId);
+
+  if (!user) {
+    return res.status(404).json({ success: false, message: 'User not found' });
+  }
+
+  const updateFields = {};
+  if (name !== undefined) {
+    if (activeProfile === 'tenant') {
+      updateFields.companyName = name;
+    } else {
+      updateFields.name = name;
+    }
+  }
+  if (email !== undefined) updateFields.email = email;
+  if (phone !== undefined) updateFields.phone = phone;
+  if (profileImageUrl !== undefined) {
+    updateFields.profileImageUrl = profileImageUrl;
+  }
+
+  let profile;
+  if (activeProfile === 'tenant') {
+    profile = await Tenant.findByIdAndUpdate(profileId, updateFields, {
+      new: true,
+      runValidators: true,
+    });
+  } else if (activeProfile === 'client') {
+    profile = await Client.findByIdAndUpdate(profileId, updateFields, {
+      new: true,
+      runValidators: true,
+    });
+  }
+
+  if (!profile) {
+    return res.status(404).json({ success: false, message: 'Profile not found.' });
+  }
+
+  res.status(200).json({
+    success: true,
+    message: 'Profile updated successfully.',
+    data: profile,
   });
 });
 
@@ -265,6 +313,7 @@ module.exports = {
   sendOtp,
   verifyOtp,
   createProfile,
+  updateProfile,
   verifyInvitation,
   register,
   login,

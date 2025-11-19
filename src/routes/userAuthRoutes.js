@@ -7,7 +7,8 @@ const {
   switchAccount,
   getAccounts,
   verifyInvitation,
-  createProfile
+  createProfile,
+  updateProfile
 } = require('../controllers/userAuthController');
 const { validate, validationSchemas } = require('../middlewares/validation');
 
@@ -24,6 +25,7 @@ router.get('/verify-invitation', verifyInvitation);
 
 // Create a new user profile
 router.post('/create-profile/:userId', createProfile);
+router.post('/update-profile/:userId/:profileId', updateProfile);
 
 // Logout a user (requires authentication)
 const { protect } = require('../middlewares/auth');
