@@ -63,6 +63,7 @@ const verifyOtp = asyncHandler(async (req, res) => {
 
   let user = await User.findOne({ email });
   let activeProfileId;
+  let activeProfileImage;
 
   if (type === 'registration' && !user) {
     let profileId;
@@ -98,6 +99,14 @@ const verifyOtp = asyncHandler(async (req, res) => {
     return res.status(404).json({ message: 'User not found. Please register.' });
   } else {
     activeProfileId = user.activeProfileId;
+    if (activeProfile === 'tenant') {
+      let getTenant = await Tenant.findOne({ _id: activeProfileId });
+      activeProfileImage = getTenant.profileImageUrl;
+    }
+    else {
+      let getClient = await Tenant.findOne({ _id: activeProfileId });
+      activeProfileImage = getClient.profileImageUrl;
+    }
   }
 
   if (user) {
@@ -110,6 +119,7 @@ const verifyOtp = asyncHandler(async (req, res) => {
       userId: user._id,
       activeProfile: user.activeProfile,
       activeProfileId,
+      activeProfileImage: activeProfileImage
     });
   } else {
     return res.status(400).json({ message: "Could not process user." });
@@ -307,10 +317,27 @@ const switchAccount = asyncHandler(async (req, res) => {
   user.activeProfileId = masterId;
   user.lastActiveDate = new Date();
   await user.save();
+  let activeProfileImage;
+  if (activeProfile === 'tenant') {
+    let getTenant = await Tenant.findOne({ _id: masterId });
+    activeProfileImage = getTenant.profileImageUrl;
+  }
+  else {
+    let getClient = await Tenant.findOne({ _id: masterId });
+    activeProfileImage = getClient.profileImageUrl;
+  }
 
   const token = jwt.sign({ id: user._id }, config.JWT_SECRET, { expiresIn: config.JWT_EXPIRES_IN });
 
-  res.status(200).json({ token, userId: user._id, activeProfile: user.activeProfile, activeProfileId: user.activeProfileId });
+  res.status(200).json({
+    success: true,
+    message: 'Profile switch successfully.',
+    token,
+    userId: user._id,
+    activeProfile: user.activeProfile,
+    activeProfileId: user.activeProfileId,
+    activeProfileImage
+  });
 });
 
 const getAccounts = asyncHandler(async (req, res) => {
