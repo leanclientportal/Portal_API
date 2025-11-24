@@ -71,10 +71,12 @@ const verifyOtp = asyncHandler(async (req, res) => {
       const newTenant = new Tenant({ companyName: name, email, phone });
       await newTenant.save();
       profileId = newTenant._id;
+      activeProfileImage = newTenant.profileImageUrl;
     } else {
       const newClient = new Client({ name, email, phone });
       await newClient.save();
       profileId = newClient._id;
+      activeProfileImage = newClient.profileImageUrl;
     }
 
     const newUser = new User({
@@ -97,15 +99,18 @@ const verifyOtp = asyncHandler(async (req, res) => {
 
   } else if (type === 'login' && !user) {
     return res.status(404).json({ message: 'User not found. Please register.' });
-  } else {
+  } else if (user) {
     activeProfileId = user.activeProfileId;
-    if (activeProfile === 'tenant') {
-      let getTenant = await Tenant.findOne({ _id: activeProfileId });
-      activeProfileImage = getTenant.profileImageUrl;
-    }
-    else {
-      let getClient = await Tenant.findOne({ _id: activeProfileId });
-      activeProfileImage = getClient.profileImageUrl;
+    if (user.activeProfile === 'tenant') {
+      const tenant = await Tenant.findById(activeProfileId);
+      if (tenant) {
+        activeProfileImage = tenant.profileImageUrl;
+      }
+    } else if (user.activeProfile === 'client') {
+      const client = await Client.findById(activeProfileId);
+      if (client) {
+        activeProfileImage = client.profileImageUrl;
+      }
     }
   }
 
@@ -119,7 +124,7 @@ const verifyOtp = asyncHandler(async (req, res) => {
       userId: user._id,
       activeProfile: user.activeProfile,
       activeProfileId,
-      activeProfileImage: activeProfileImage
+      activeProfileImage
     });
   } else {
     return res.status(400).json({ message: "Could not process user." });
@@ -319,12 +324,15 @@ const switchAccount = asyncHandler(async (req, res) => {
   await user.save();
   let activeProfileImage;
   if (activeProfile === 'tenant') {
-    let getTenant = await Tenant.findOne({ _id: masterId });
-    activeProfileImage = getTenant.profileImageUrl;
-  }
-  else {
-    let getClient = await Tenant.findOne({ _id: masterId });
-    activeProfileImage = getClient.profileImageUrl;
+    const tenant = await Tenant.findById(masterId);
+    if (tenant) {
+      activeProfileImage = tenant.profileImageUrl;
+    }
+  } else if (activeProfile === 'client') {
+    const client = await Client.findById(masterId);
+    if (client) {
+      activeProfileImage = client.profileImageUrl;
+    }
   }
 
   const token = jwt.sign({ id: user._id }, config.JWT_SECRET, { expiresIn: config.JWT_EXPIRES_IN });
@@ -350,30 +358,38 @@ const getAccounts = asyncHandler(async (req, res) => {
   }
 
   const accounts = await Promise.all(mappings.map(async (mapping) => {
+    let profile = null;
     if (mapping.role === 'client') {
-      const client = await Client.findById(mapping.masterId);
-      return {
-        type: 'client',
-        id: client._id,
-        name: client.name,
-        email: client.email,
-        phone: client.phone,
-        profileImageUrl: client.profileImageUrl
-      };
+      profile = await Client.findById(mapping.masterId);
+      if (profile) {
+        return {
+          type: 'client',
+          id: profile._id,
+          name: profile.name,
+          email: profile.email,
+          phone: profile.phone,
+          profileImageUrl: profile.profileImageUrl
+        };
+      }
     } else if (mapping.role === 'tenant') {
-      const tenant = await Tenant.findById(mapping.masterId);
-      return {
-        type: 'tenant',
-        id: tenant._id,
-        name: tenant.companyName,
-        email: tenant.email,
-        phone: tenant.phone,
-        profileImageUrl: tenant.profileImageUrl
-      };
+      profile = await Tenant.findById(mapping.masterId);
+      if (profile) {
+        return {
+          type: 'tenant',
+          id: profile._id,
+          name: profile.companyName,
+          email: profile.email,
+          phone: profile.phone,
+          profileImageUrl: profile.profileImageUrl
+        };
+      }
     }
+    return null;
   }));
 
-  res.status(200).json({ accounts });
+  const validAccounts = accounts.filter(account => account !== null);
+
+  res.status(200).json({ accounts: validAccounts });
 });
 
 module.exports = {
