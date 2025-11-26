@@ -1,11 +1,11 @@
 const express = require('express');
+const { protect } = require('../middlewares/auth');
 const {
   getDocuments,
   getDocument,
   uploadDocument,
   updateDocument,
-  deleteDocument,
-  downloadDocument
+  deleteDocument
 } = require('../controllers/documentController');
 const {
   validate,
@@ -17,6 +17,8 @@ const {
 const Joi = require('joi');
 
 const router = express.Router();
+
+router.use(protect);
 
 const paramSchemaList = Joi.object({
   projectId: objectIdSchema.required()
@@ -47,7 +49,6 @@ router.route('/:projectId/:documentId')
 router.get(
   '/:projectId/:documentId/download',
   validateParams(paramSchemaDetail),
-  downloadDocument
 );
 
 module.exports = router;

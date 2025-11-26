@@ -1,7 +1,6 @@
 const Document = require('../models/Document');
 const Project = require('../models/Project');
 const asyncHandler = require('../middlewares/asyncHandler');
-const { s3 } = require('../services/aws');
 
 // @desc    Get all documents for a project
 // @route   GET /api/v1/documents/:projectId
@@ -109,34 +108,10 @@ const deleteDocument = asyncHandler(async (req, res) => {
   res.status(200).json({ success: true, message: 'Document deleted successfully' });
 });
 
-// @desc    Download a document
-// @route   GET /api/v1/documents/:projectId/:documentId/download
-// @access  Private
-const downloadDocument = asyncHandler(async (req, res) => {
-  const { projectId, documentId } = req.params;
-
-  const document = await Document.findOne({ _id: documentId, projectId, isActive: true });
-
-  if (!document || !document.fileUrl) {
-    return res.status(404).json({ success: false, message: 'Document or file not found' });
-  }
-
-  // Assuming fileUrl is a key to an S3 object
-  const params = {
-    Bucket: process.env.AWS_S3_BUCKET_NAME,
-    Key: document.fileUrl.split('.com/')[1], // Extract key from URL
-  };
-
-  const fileStream = s3.getObject(params).createReadStream();
-  res.attachment(document.title); // Set the filename for download
-  fileStream.pipe(res);
-});
-
 module.exports = {
   getDocuments,
   getDocument,
   uploadDocument,
   updateDocument,
   deleteDocument,
-  downloadDocument
 };

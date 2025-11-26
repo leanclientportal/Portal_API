@@ -1,4 +1,5 @@
 const express = require('express');
+const { protect } = require('../middlewares/auth');
 const {
   getTasks,
   createTask,
@@ -15,6 +16,8 @@ const {
 const Joi = require('joi');
 
 const router = express.Router();
+
+router.use(protect);
 
 const paramSchemaList = Joi.object({
   projectId: objectIdSchema.required()
