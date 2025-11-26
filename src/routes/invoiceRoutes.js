@@ -9,7 +9,7 @@ const {
 } = require('../controllers/invoiceController');
 
 // All routes are protected
-router.use(protect);
+// router.use(protect);
 
 router.route('/:projectId')
   .get(getInvoices)

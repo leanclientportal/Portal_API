@@ -17,7 +17,7 @@ const Joi = require('joi');
 
 const router = express.Router();
 
-router.use(protect);
+// router.use(protect);
 
 const paramSchemaList = Joi.object({
   projectId: objectIdSchema.required()
