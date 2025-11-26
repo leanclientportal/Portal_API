@@ -1,99 +1,64 @@
 const Invoice = require('../models/Invoice');
+const Project = require('../models/Project');
 const asyncHandler = require('../middlewares/asyncHandler');
 
 // @desc    Get all invoices for a project
-// @route   GET /api/v1/invoices/:tenantId/:clientId/:projectId
+// @route   GET /api/v1/invoices/:projectId
 // @access  Private
 const getInvoices = asyncHandler(async (req, res) => {
-  const { tenantId, clientId, projectId } = req.params;
-  const { page = 1, limit = 20, search, status } = req.query;
+  const { projectId } = req.params;
+  const { page = 1, limit = 20, status } = req.query;
 
-  // Build query
-  const query = { tenantId, clientId, projectId, isActive: true };
-  
-  if (search) {
-    query.$or = [
-      { title: { $regex: search, $options: 'i' } },
-      { invoiceNumber: { $regex: search, $options: 'i' } },
-      { description: { $regex: search, $options: 'i' } }
-    ];
-  }
-  
+  const query = { projectId, isActive: true };
+
   if (status) {
     query.status = status;
   }
 
-  // Execute query with pagination
   const invoices = await Invoice.find(query)
-    .populate('projectId', 'name')
-    .populate('clientId', 'name company email')
-    .select('-__v')
     .sort({ createdAt: -1 })
-    .limit(limit * 1)
-    .skip((page - 1) * limit);
+    .skip((page - 1) * limit)
+    .limit(parseInt(limit))
+    .populate('projectId', 'name');
 
   const total = await Invoice.countDocuments(query);
 
   res.status(200).json({
     success: true,
-    message: 'Invoices retrieved successfully',
-    data: {
-      invoices,
-      pagination: {
-        current: parseInt(page),
-        total: Math.ceil(total / limit),
-        count: invoices.length,
-        totalRecords: total
-      }
-    }
+    count: invoices.length,
+    pagination: {
+      total,
+      page: parseInt(page),
+      limit: parseInt(limit)
+    },
+    data: invoices
   });
 });
 
 // @desc    Create new invoice
-// @route   POST /api/v1/invoices/:tenantId/:clientId/:projectId
+// @route   POST /api/v1/invoices/:projectId
 // @access  Private
 const createInvoice = asyncHandler(async (req, res) => {
-  const { tenantId, clientId, projectId } = req.params;
+  const { projectId } = req.params;
+  const { url, amount, discount, dueAmount, dueDate, paymentLink, status } = req.body;
 
-  // Calculate totals
-  let subtotal = 0;
-  if (req.body.items && req.body.items.length > 0) {
-    subtotal = req.body.items.reduce((sum, item) => sum + (item.amount || 0), 0);
+  const project = await Project.findById(projectId);
+  if (!project) {
+    return res.status(404).json({ success: false, message: 'Project not found' });
   }
 
-  const taxAmount = req.body.tax ? (subtotal * (req.body.tax.rate || 0)) / 100 : 0;
-  const discountAmount = req.body.discount ? 
-    (req.body.discount.type === 'percentage' ? 
-      (subtotal * (req.body.discount.value || 0)) / 100 : 
-      req.body.discount.value || 0) : 0;
-  const total = subtotal + taxAmount - discountAmount;
-
-  // Generate invoice number
-  const invoiceCount = await Invoice.countDocuments({ tenantId });
-  const invoiceNumber = `INV-${Date.now()}-${(invoiceCount + 1).toString().padStart(4, '0')}`;
-
   const invoice = await Invoice.create({
-    ...req.body,
-    tenantId,
-    clientId,
+    tenantId: project.tenantId,
+    clientId: project.clientId,
     projectId,
-    invoiceNumber,
-    subtotal,
-    tax: {
-      ...req.body.tax,
-      amount: taxAmount
-    },
-    discount: {
-      ...req.body.discount,
-      amount: discountAmount
-    },
-    total
+    url,
+    amount,
+    discount,
+    dueAmount,
+    dueDate,
+    paymentLink,
+    status
   });
-
-  await invoice.populate([
-    { path: 'projectId', select: 'name' },
-    { path: 'clientId', select: 'name company email' }
-  ]);
 
   res.status(201).json({
     success: true,
@@ -103,43 +68,35 @@ const createInvoice = asyncHandler(async (req, res) => {
 });
 
 // @desc    Update invoice
-// @route   PUT /api/v1/invoices/:tenantId/:clientId/:projectId/:invoiceId
+// @route   PUT /api/v1/invoices/:projectId/:invoiceId
 // @access  Private
 const updateInvoice = asyncHandler(async (req, res) => {
-  const { tenantId, clientId, projectId, invoiceId } = req.params;
+  const { projectId, invoiceId } = req.params;
+  const { url, amount, discount, dueAmount, dueDate, paymentLink, status } = req.body;
 
-  // Recalculate totals if items are updated
-  if (req.body.items) {
-    const subtotal = req.body.items.reduce((sum, item) => sum + (item.amount || 0), 0);
-    const taxAmount = req.body.tax ? (subtotal * (req.body.tax.rate || 0)) / 100 : 0;
-    const discountAmount = req.body.discount ? 
-      (req.body.discount.type === 'percentage' ? 
-        (subtotal * (req.body.discount.value || 0)) / 100 : 
-        req.body.discount.value || 0) : 0;
-    const total = subtotal + taxAmount - discountAmount;
+  const updateFields = {
+    url,
+    amount,
+    discount,
+    dueAmount,
+    dueDate,
+    paymentLink,
+    status
+  };
 
-    req.body.subtotal = subtotal;
-    req.body.tax = {
-      ...req.body.tax,
-      amount: taxAmount
-    };
-    req.body.discount = {
-      ...req.body.discount,
-      amount: discountAmount
-    };
-    req.body.total = total;
-  }
+  // Remove undefined fields so they don't overwrite existing data
+  Object.keys(updateFields).forEach(key => updateFields[key] === undefined && delete updateFields[key]);
 
   const invoice = await Invoice.findOneAndUpdate(
-    { _id: invoiceId, tenantId, clientId, projectId },
-    req.body,
+    { _id: invoiceId, projectId },
+    updateFields,
     {
       new: true,
       runValidators: true
     }
   ).populate([
     { path: 'projectId', select: 'name' },
-    { path: 'clientId', select: 'name company email' }
+    { path: 'clientId', select: 'name email' }
   ]);
 
   if (!invoice) {
@@ -157,13 +114,13 @@ const updateInvoice = asyncHandler(async (req, res) => {
 });
 
 // @desc    Delete invoice (soft delete)
-// @route   DELETE /api/v1/invoices/:tenantId/:clientId/:projectId/:invoiceId
+// @route   DELETE /api/v1/invoices/:projectId/:invoiceId
 // @access  Private
 const deleteInvoice = asyncHandler(async (req, res) => {
-  const { tenantId, clientId, projectId, invoiceId } = req.params;
+  const { projectId, invoiceId } = req.params;
 
   const invoice = await Invoice.findOneAndUpdate(
-    { _id: invoiceId, tenantId, clientId, projectId },
+    { _id: invoiceId, projectId },
     { isActive: false },
     { new: true }
   );
@@ -177,7 +134,8 @@ const deleteInvoice = asyncHandler(async (req, res) => {
 
   res.status(200).json({
     success: true,
-    message: 'Invoice deleted successfully'
+    message: 'Invoice deleted successfully',
+    data: {}
   });
 });
 

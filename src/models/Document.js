@@ -6,17 +6,12 @@ const documentSchema = new mongoose.Schema({
     ref: 'Project',
     required: true
   },
-  clientId: {
-    type: mongoose.Schema.Types.ObjectId,
-    ref: 'Client',
-    required: true
-  },
   name: {
     type: String,
     required: true,
     trim: true
   },
-  url: {
+  docUrl: {
     type: String,
     required: true,
     trim: true
@@ -31,7 +26,7 @@ const documentSchema = new mongoose.Schema({
   },
   uploadedBy: {
     type: String,
-    enum: ['admin', 'client']
+    enum: ['tenant', 'client']
   },
   uploaderId: {
     type: mongoose.Schema.Types.ObjectId

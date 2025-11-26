@@ -1,190 +1,135 @@
 const Document = require('../models/Document');
+const Project = require('../models/Project');
 const asyncHandler = require('../middlewares/asyncHandler');
-
-// @desc    Get single document by id
-// @route   GET /api/v1/documents/:clientId/:projectId/:documentId
-// @access  Private
-const getDocument = asyncHandler(async (req, res) => {
-  const { clientId, projectId, documentId } = req.params;
-
-  const document = await Document.findOne({
-    _id: documentId,
-    clientId,
-    projectId,
-
-  }).populate([
-    { path: 'projectId', select: 'name' },
-    { path: 'clientId', select: 'name' }
-  ]);
-
-  if (!document) {
-    return res.status(404).json({
-      success: false,
-      message: 'Document not found'
-    });
-  }
-
-  res.status(200).json({
-    success: true,
-    message: 'Document retrieved successfully',
-    data: document
-  });
-});
+const { s3 } = require('../services/aws');
 
 // @desc    Get all documents for a project
-// @route   GET /api/v1/documents/:clientId/:projectId
+// @route   GET /api/v1/documents/:projectId
 // @access  Private
 const getDocuments = asyncHandler(async (req, res) => {
-  const { clientId, projectId } = req.params;
+  const { projectId } = req.params;
   const { page = 1, limit = 20, search } = req.query;
 
-  // Build query
-  const query = { clientId, projectId };
-
+  const query = { projectId, isActive: true };
   if (search) {
-    query.$or = [
-      { name: { $regex: search, $options: 'i' } },
-      { tag: { $regex: search, $options: 'i' } }
-    ];
+    query.title = { $regex: search, $options: 'i' };
   }
 
-  // Execute query with pagination
   const documents = await Document.find(query)
-    .populate('projectId', 'name')
-    .populate('clientId', 'name')
-    .select('-__v')
-    .sort({ createdDate: -1 })
-    .limit(limit * 1)
-    .skip((page - 1) * limit);
+    .populate('uploadedBy', 'name')
+    .sort({ createdAt: -1 })
+    .skip((page - 1) * limit)
+    .limit(parseInt(limit));
 
   const total = await Document.countDocuments(query);
 
   res.status(200).json({
     success: true,
-    message: 'Documents retrieved successfully',
-    data: {
-      documents,
-      pagination: {
-        current: parseInt(page),
-        total: Math.ceil(total / limit),
-        count: documents.length,
-        totalRecords: total
-      }
-    }
+    count: documents.length,
+    pagination: { total, page: parseInt(page), limit: parseInt(limit) },
+    data: documents
   });
 });
 
-// @desc    Create document (URL-based)
-// @route   POST /api/v1/documents/:clientId/:projectId
+// @desc    Get a single document
+// @route   GET /api/v1/documents/:projectId/:documentId
+// @access  Private
+const getDocument = asyncHandler(async (req, res) => {
+  const { projectId, documentId } = req.params;
+  const document = await Document.findOne({ _id: documentId, projectId, isActive: true })
+
+  if (!document) {
+    return res.status(404).json({ success: false, message: 'Document not found' });
+  }
+
+  res.status(200).json({ success: true, data: document });
+});
+
+// @desc    Upload a document
+// @route   POST /api/v1/documents/:projectId
 // @access  Private
 const uploadDocument = asyncHandler(async (req, res) => {
-  const { clientId, projectId } = req.params;
-  const { name, url, tag, uploadedBy, uploaderId, createdDate } = req.body;
+  const { projectId } = req.params;
+  const { name, docUrl, uploadedBy, uploaderId } = req.body;
 
-  const document = await Document.create({
-    clientId,
+  const project = await Project.findById(projectId);
+  if (!project) {
+    return res.status(404).json({ success: false, message: 'Project not found' });
+  }
+
+  const document = new Document({
     projectId,
     name,
-    url,
-    tag,
+    docUrl,
     uploadedBy,
-    uploaderId,
-    createdDate
+    uploaderId
   });
 
-  await document.populate([
-    { path: 'projectId', select: 'name' },
-    { path: 'clientId', select: 'name' }
-  ]);
+  await document.save();
 
-  res.status(201).json({
-    success: true,
-    message: 'Document created successfully',
-    data: document
-  });
+  res.status(201).json({ success: true, data: document });
 });
 
-// @desc    Download document (redirect) and increment download count
-// @route   GET /api/v1/documents/:clientId/:projectId/:documentId/download
-// @access  Private
-const downloadDocument = asyncHandler(async (req, res) => {
-  const { clientId, projectId, documentId } = req.params;
-
-  const document = await Document.findOne({
-    _id: documentId,
-    clientId,
-    projectId,
-
-  });
-
-  if (!document) {
-    return res.status(404).json({
-      success: false,
-      message: 'Document not found'
-    });
-  }
-
-  // Redirect to the file URL (Cloudinary secure URL)
-  return res.redirect(document.url);
-});
-
-// @desc    Update document metadata
-// @route   PUT /api/v1/documents/:clientId/:projectId/:documentId
+// @desc    Update a document
+// @route   PUT /api/v1/documents/:projectId/:documentId
 // @access  Private
 const updateDocument = asyncHandler(async (req, res) => {
-  const { clientId, projectId, documentId } = req.params;
+  const { projectId, documentId } = req.params;
+  const { name, docUrl, uploadedBy, uploaderId } = req.body;
 
   const document = await Document.findOneAndUpdate(
-    { _id: documentId, clientId, projectId },
-    req.body,
-    {
-      new: true,
-      runValidators: true
-    }
-  ).populate([
-    { path: 'projectId', select: 'name' },
-    { path: 'clientId', select: 'name' }
-  ]);
+    { _id: documentId, projectId, isActive: true },
+    { name, docUrl, uploadedBy, uploaderId },
+    { new: true, runValidators: true }
+  );
 
   if (!document) {
-    return res.status(404).json({
-      success: false,
-      message: 'Document not found'
-    });
+    return res.status(404).json({ success: false, message: 'Document not found' });
   }
 
-  res.status(200).json({
-    success: true,
-    message: 'Document updated successfully',
-    data: document
-  });
+  res.status(200).json({ success: true, data: document });
 });
 
-// @desc    Delete document
-// @route   DELETE /api/v1/documents/:clientId/:projectId/:documentId
+// @desc    Delete a document (soft delete)
+// @route   DELETE /api/v1/documents/:projectId/:documentId
 // @access  Private
 const deleteDocument = asyncHandler(async (req, res) => {
-  const { clientId, projectId, documentId } = req.params;
+  const { projectId, documentId } = req.params;
 
-  const document = await Document.findOne({
-    _id: documentId,
-    clientId,
-    projectId
-  });
+  const document = await Document.findOneAndUpdate(
+    { _id: documentId, projectId, isActive: true },
+    { isActive: false },
+    { new: true }
+  );
 
   if (!document) {
-    return res.status(404).json({
-      success: false,
-      message: 'Document not found'
-    });
+    return res.status(404).json({ success: false, message: 'Document not found' });
   }
 
-  await Document.findByIdAndDelete(documentId);
+  res.status(200).json({ success: true, message: 'Document deleted successfully' });
+});
 
-  res.status(200).json({
-    success: true,
-    message: 'Document deleted successfully'
-  });
+// @desc    Download a document
+// @route   GET /api/v1/documents/:projectId/:documentId/download
+// @access  Private
+const downloadDocument = asyncHandler(async (req, res) => {
+  const { projectId, documentId } = req.params;
+
+  const document = await Document.findOne({ _id: documentId, projectId, isActive: true });
+
+  if (!document || !document.fileUrl) {
+    return res.status(404).json({ success: false, message: 'Document or file not found' });
+  }
+
+  // Assuming fileUrl is a key to an S3 object
+  const params = {
+    Bucket: process.env.AWS_S3_BUCKET_NAME,
+    Key: document.fileUrl.split('.com/')[1], // Extract key from URL
+  };
+
+  const fileStream = s3.getObject(params).createReadStream();
+  res.attachment(document.title); // Set the filename for download
+  fileStream.pipe(res);
 });
 
 module.exports = {

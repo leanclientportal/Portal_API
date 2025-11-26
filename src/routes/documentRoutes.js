@@ -8,28 +8,26 @@ const {
   downloadDocument
 } = require('../controllers/documentController');
 const {
+  validate,
   validateQuery,
   validateParams,
   validationSchemas,
-  objectIdSchema,
-  validate
+  objectIdSchema
 } = require('../middlewares/validation');
 const Joi = require('joi');
 
 const router = express.Router();
 
 const paramSchemaList = Joi.object({
-  clientId: objectIdSchema.required(),
   projectId: objectIdSchema.required()
 });
 
 const paramSchemaDetail = Joi.object({
-  clientId: objectIdSchema.required(),
   projectId: objectIdSchema.required(),
   documentId: objectIdSchema.required()
 });
 
-router.route('/:clientId/:projectId')
+router.route('/:projectId')
   .get(
     validateParams(paramSchemaList),
     validateQuery(validationSchemas.pagination),
@@ -41,13 +39,13 @@ router.route('/:clientId/:projectId')
     uploadDocument
   );
 
-router.route('/:clientId/:projectId/:documentId')
+router.route('/:projectId/:documentId')
   .get(validateParams(paramSchemaDetail), getDocument)
   .put(validateParams(paramSchemaDetail), validate(validationSchemas.document.update), updateDocument)
   .delete(validateParams(paramSchemaDetail), deleteDocument);
 
 router.get(
-  '/:clientId/:projectId/:documentId/download',
+  '/:projectId/:documentId/download',
   validateParams(paramSchemaDetail),
   downloadDocument
 );

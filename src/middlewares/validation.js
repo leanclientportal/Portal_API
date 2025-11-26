@@ -97,7 +97,6 @@ const validationSchemas = {
   document: {
     create: Joi.object({
       projectId: objectIdSchema.required(),
-      clientId: objectIdSchema.required(),
       url: Joi.string().uri().required(),
       name: Joi.string().required().min(1).max(300),
       tag: Joi.string().max(100),
