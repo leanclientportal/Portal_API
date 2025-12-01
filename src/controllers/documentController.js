@@ -49,7 +49,7 @@ const getDocument = asyncHandler(async (req, res) => {
 // @access  Private
 const uploadDocument = asyncHandler(async (req, res) => {
   const { projectId } = req.params;
-  const { name, docUrl, uploadedBy, uploaderId } = req.body;
+  const { name, docUrl, description, uploadedBy, uploaderId } = req.body;
 
   const project = await Project.findById(projectId);
   if (!project) {
@@ -75,7 +75,7 @@ const uploadDocument = asyncHandler(async (req, res) => {
 // @access  Private
 const updateDocument = asyncHandler(async (req, res) => {
   const { projectId, documentId } = req.params;
-  const { name, docUrl, uploadedBy, uploaderId } = req.body;
+  const { name, docUrl, description, uploadedBy, uploaderId } = req.body;
 
   const document = await Document.findOneAndUpdate(
     { _id: documentId, projectId, isActive: true },
