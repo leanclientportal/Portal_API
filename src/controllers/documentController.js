@@ -9,7 +9,7 @@ const getDocuments = asyncHandler(async (req, res) => {
   const { projectId } = req.params;
   const { page = 1, limit = 20, search } = req.query;
 
-  const query = { projectId, isActive: true };
+  const query = { projectId };
   if (search) {
     query.name = { $regex: search, $options: 'i' };
   }
