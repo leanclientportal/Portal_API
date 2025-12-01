@@ -11,11 +11,11 @@ const getDocuments = asyncHandler(async (req, res) => {
 
   const query = { projectId, isActive: true };
   if (search) {
-    query.title = { $regex: search, $options: 'i' };
+    query.name = { $regex: search, $options: 'i' };
   }
 
   const documents = await Document.find(query)
-    .populate('uploadedBy', 'name')
+    // .populate('uploadedBy', 'name')
     .sort({ createdAt: -1 })
     .skip((page - 1) * limit)
     .limit(parseInt(limit));
