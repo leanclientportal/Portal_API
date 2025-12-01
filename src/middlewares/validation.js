@@ -96,15 +96,17 @@ const validationSchemas = {
   // Document validation
   document: {
     create: Joi.object({
-      docUrl: Joi.string().uri().required(),
       name: Joi.string().required().min(1).max(300),
+      description: Joi.string().max(2000),
+      docUrl: Joi.string().uri().required(),
       tag: Joi.string().optional(),
       uploadedBy: Joi.string().valid('admin', 'client'),
       uploaderId: objectIdSchema
     }),
     update: Joi.object({
-      docUrl: Joi.string().uri(),
       name: Joi.string().min(1).max(300),
+      description: Joi.string().max(2000),
+      docUrl: Joi.string().uri(),
       tag: Joi.string().optional(),
       uploadedBy: Joi.string().valid('admin', 'client'),
       uploaderId: objectIdSchema
