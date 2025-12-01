@@ -100,7 +100,7 @@ const validationSchemas = {
       description: Joi.string().max(2000),
       docUrl: Joi.string().uri().required(),
       tag: Joi.string().optional(),
-      uploadedBy: Joi.string().valid('admin', 'client'),
+      uploadedBy: Joi.string().valid('tenant', 'client'),
       uploaderId: objectIdSchema
     }),
     update: Joi.object({
@@ -108,7 +108,7 @@ const validationSchemas = {
       description: Joi.string().max(2000),
       docUrl: Joi.string().uri(),
       tag: Joi.string().optional(),
-      uploadedBy: Joi.string().valid('admin', 'client'),
+      uploadedBy: Joi.string().valid('tenant', 'client'),
       uploaderId: objectIdSchema
     })
   },
