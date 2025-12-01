@@ -96,11 +96,7 @@ const updateDocument = asyncHandler(async (req, res) => {
 const deleteDocument = asyncHandler(async (req, res) => {
   const { projectId, documentId } = req.params;
 
-  const document = await Document.findOneAndUpdate(
-    { _id: documentId, projectId, isActive: true },
-    { isActive: false },
-    { new: true }
-  );
+  const document = await Document.findOneAndDelete({ _id: documentId, projectId });
 
   if (!document) {
     return res.status(404).json({ success: false, message: 'Document not found' });
