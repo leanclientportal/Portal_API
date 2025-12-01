@@ -96,7 +96,6 @@ const validationSchemas = {
   // Document validation
   document: {
     create: Joi.object({
-      projectId: objectIdSchema.required(),
       docUrl: Joi.string().uri().required(),
       name: Joi.string().required().min(1).max(300),
       tag: Joi.string().optional(),
@@ -115,7 +114,6 @@ const validationSchemas = {
   // Invoice validation
   invoice: {
     create: Joi.object({
-      projectId: objectIdSchema.required(),
       invoiceUrl: Joi.string().uri(),
       amount: Joi.number().optional(),
       discount: Joi.number().min(0),

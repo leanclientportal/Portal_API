@@ -11,6 +11,11 @@ const documentSchema = new mongoose.Schema({
     required: true,
     trim: true
   },
+  description: {
+    type: String,
+    required: false,
+    trim: true
+  },
   docUrl: {
     type: String,
     required: true,

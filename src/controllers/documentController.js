@@ -59,6 +59,7 @@ const uploadDocument = asyncHandler(async (req, res) => {
   const document = new Document({
     projectId,
     name,
+    description,
     docUrl,
     uploadedBy,
     uploaderId
@@ -78,7 +79,7 @@ const updateDocument = asyncHandler(async (req, res) => {
 
   const document = await Document.findOneAndUpdate(
     { _id: documentId, projectId, isActive: true },
-    { name, docUrl, uploadedBy, uploaderId },
+    { name, docUrl, description, uploadedBy, uploaderId },
     { new: true, runValidators: true }
   );
 
