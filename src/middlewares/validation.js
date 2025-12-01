@@ -97,16 +97,16 @@ const validationSchemas = {
   document: {
     create: Joi.object({
       projectId: objectIdSchema.required(),
-      url: Joi.string().uri().required(),
+      docUrl: Joi.string().uri().required(),
       name: Joi.string().required().min(1).max(300),
-      tag: Joi.string().max(100),
+      tag: Joi.string().optional(),
       uploadedBy: Joi.string().valid('admin', 'client'),
       uploaderId: objectIdSchema
     }),
     update: Joi.object({
-      url: Joi.string().uri(),
+      docUrl: Joi.string().uri(),
       name: Joi.string().min(1).max(300),
-      tag: Joi.string().max(100),
+      tag: Joi.string().optional(),
       uploadedBy: Joi.string().valid('admin', 'client'),
       uploaderId: objectIdSchema
     })
@@ -116,20 +116,17 @@ const validationSchemas = {
   invoice: {
     create: Joi.object({
       projectId: objectIdSchema.required(),
-      clientId: objectIdSchema.required(),
-      url: Joi.string().uri(),
-      amount: Joi.number().min(0).required(),
+      invoiceUrl: Joi.string().uri(),
+      amount: Joi.number().optional(),
       discount: Joi.number().min(0),
-      dueAmount: Joi.number().min(0),
       dueDate: Joi.date(),
       paymentLink: Joi.string(),
       status: Joi.number()
     }),
     update: Joi.object({
-      url: Joi.string().uri(),
+      invoiceUrl: Joi.string().uri(),
       amount: Joi.number().min(0),
       discount: Joi.number().min(0),
-      dueAmount: Joi.number().min(0),
       dueDate: Joi.date(),
       paymentLink: Joi.string(),
       status: Joi.number()
