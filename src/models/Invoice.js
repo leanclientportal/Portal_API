@@ -42,7 +42,4 @@ const invoiceSchema = new mongoose.Schema({
   collection: 'invoice'
 });
 
-// Indexes for multi-tenant queries
-invoiceSchema.index({ projectId: 1, isActive: 1 });
-
 module.exports = mongoose.model('Invoice', invoiceSchema);
