@@ -35,7 +35,7 @@ const invoiceSchema = new mongoose.Schema({
     required: false
   },
   paymentLink: {
-    type: Number,
+    type: String,
     required: false
   },
 }, {
