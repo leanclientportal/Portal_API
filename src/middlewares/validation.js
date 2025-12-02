@@ -117,19 +117,21 @@ const validationSchemas = {
   invoice: {
     create: Joi.object({
       invoiceUrl: Joi.string().uri(),
+      title: Joi.string().optional(),
+      description: Joi.string().optional(),
+      status: Joi.number(),
       amount: Joi.number().optional(),
-      discount: Joi.number().min(0),
       dueDate: Joi.date(),
       paymentLink: Joi.string(),
-      status: Joi.number()
     }),
     update: Joi.object({
       invoiceUrl: Joi.string().uri(),
+      title: Joi.string().optional(),
+      description: Joi.string().optional(),
+      status: Joi.number(),
       amount: Joi.number().min(0),
-      discount: Joi.number().min(0),
       dueDate: Joi.date(),
       paymentLink: Joi.string(),
-      status: Joi.number()
     })
   },
 

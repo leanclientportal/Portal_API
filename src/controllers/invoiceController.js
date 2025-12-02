@@ -9,7 +9,7 @@ const getInvoices = asyncHandler(async (req, res) => {
   const { projectId } = req.params;
   const { page = 1, limit = 20, status } = req.query;
 
-  const query = { projectId, isActive: true };
+  const query = { projectId };
 
   if (status) {
     query.status = status;
@@ -40,7 +40,7 @@ const getInvoices = asyncHandler(async (req, res) => {
 // @access  Private
 const createInvoice = asyncHandler(async (req, res) => {
   const { projectId } = req.params;
-  const { url, amount, discount, dueAmount, dueDate, paymentLink, status } = req.body;
+  const { invoiceUrl, title, description, status, amount, dueDate, paymentLink } = req.body;
 
   const project = await Project.findById(projectId);
   if (!project) {
@@ -48,16 +48,14 @@ const createInvoice = asyncHandler(async (req, res) => {
   }
 
   const invoice = await Invoice.create({
-    tenantId: project.tenantId,
-    clientId: project.clientId,
     projectId,
-    url,
+    invoiceUrl,
+    title,
+    description,
+    status,
     amount,
-    discount,
-    dueAmount,
     dueDate,
-    paymentLink,
-    status
+    paymentLink
   });
 
   res.status(201).json({
@@ -72,16 +70,16 @@ const createInvoice = asyncHandler(async (req, res) => {
 // @access  Private
 const updateInvoice = asyncHandler(async (req, res) => {
   const { projectId, invoiceId } = req.params;
-  const { url, amount, discount, dueAmount, dueDate, paymentLink, status } = req.body;
+  const { invoiceUrl, title, description, status, amount, dueDate, paymentLink } = req.body;
 
   const updateFields = {
-    url,
+    invoiceUrl,
+    title,
+    description,
+    status,
     amount,
-    discount,
-    dueAmount,
     dueDate,
-    paymentLink,
-    status
+    paymentLink
   };
 
   // Remove undefined fields so they don't overwrite existing data
