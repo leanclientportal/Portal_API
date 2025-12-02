@@ -9,7 +9,6 @@ const invoiceSchema = new mongoose.Schema({
   invoiceUrl: {
     type: String,
     required: true,
-    unique: false,
     trim: true
   },
   title: {
@@ -44,8 +43,6 @@ const invoiceSchema = new mongoose.Schema({
 });
 
 // Indexes for multi-tenant queries
-invoiceSchema.index({ tenantId: 1, clientId: 1, projectId: 1, isActive: 1 });
-invoiceSchema.index({ tenantId: 1, status: 1 });
-invoiceSchema.index({ tenantId: 1, invoiceNumber: 1 });
+invoiceSchema.index({ projectId: 1, isActive: 1 });
 
 module.exports = mongoose.model('Invoice', invoiceSchema);
