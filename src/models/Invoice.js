@@ -9,7 +9,7 @@ const invoiceSchema = new mongoose.Schema({
   invoiceUrl: {
     type: String,
     required: true,
-    unique: true,
+    unique: false,
     trim: true
   },
   title: {
