@@ -1,3 +1,4 @@
+const { date } = require('joi');
 const mongoose = require('mongoose');
 
 const clientSchema = new mongoose.Schema({
@@ -10,7 +11,6 @@ const clientSchema = new mongoose.Schema({
   email: {
     type: String,
     required: true,
-    unique: false,
     lowercase: true,
   },
   phone: {
@@ -24,6 +24,13 @@ const clientSchema = new mongoose.Schema({
   },
   profileImageUrl: {
     type: String,
+  },
+  lastActivityDate: {
+    type: Date,
+  },
+  invitationToken: {
+    type: String,
+    select: false
   }
 }, {
   timestamps: true,

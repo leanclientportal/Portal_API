@@ -1,0 +1,20 @@
+const express = require('express');
+const router = express.Router();
+const {
+  getEmailTemplates,
+  createEmailTemplate,
+  updateEmailTemplate,
+  deleteEmailTemplate,
+} = require('../controllers/emailTemplateController');
+const { protect } = require('../middlewares/auth');
+
+// All routes in this file are protected
+router.use(protect);
+
+// Route to get all email templates for the authenticated tenant
+router.route('/').get(getEmailTemplates).post(createEmailTemplate);
+
+// Routes to update and delete a specific email template
+router.route('/:id').put(updateEmailTemplate).delete(deleteEmailTemplate);
+
+module.exports = router;

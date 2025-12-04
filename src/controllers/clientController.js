@@ -5,7 +5,8 @@ const TenantClientMapping = require('../models/TenantClientMapping');
 const User = require('../models/User');
 const UserTenantClientMapping = require('../models/UserTenantClientMapping');
 const asyncHandler = require('../middlewares/asyncHandler');
-const { sendEmail } = require('../services/emailService');
+const { sendInvitationEmail } = require('../utils/emailUtils');
+const config = require('../config');
 
 // @desc    Get all clients for a tenant
 // @route   GET /api/v1/clients/:tenantId
@@ -85,6 +86,8 @@ const createClient = asyncHandler(async (req, res) => {
     throw new Error('Please provide name, email, and phone');
   }
 
+  const invitationToken = crypto.randomBytes(32).toString('hex');
+
   let client = await Client.findOne({ email });
   if (client) {
     const existingMapping = await TenantClientMapping.findOne({ tenantId, clientId: client._id });
@@ -92,8 +95,11 @@ const createClient = asyncHandler(async (req, res) => {
       res.status(400);
       throw new Error('A client with this email already exists and is mapped to this tenant');
     }
+    else {
+      client = await Client.create({ name, email, phone, profileImageUrl, isActive: false, lastActivityDate: new Date(), invitationToken });
+    }
   } else {
-    client = await Client.create({ name, email, phone, profileImageUrl });
+    client = await Client.create({ name, email, phone, profileImageUrl, isActive: false, lastActivityDate: new Date(), invitationToken });
   }
 
   await TenantClientMapping.create({
@@ -104,14 +110,13 @@ const createClient = asyncHandler(async (req, res) => {
   let user = await User.findOne({ email });
 
   if (!user) {
-    const invitationToken = crypto.randomBytes(32).toString('hex');
     user = await User.create({
       name,
       email,
       activeProfile: 'client',
       activeProfileId: client._id,
       status: 'pending',
-      invitationToken,
+      lastActiveDate: new Date(),
     });
 
     await UserTenantClientMapping.create({
@@ -120,16 +125,8 @@ const createClient = asyncHandler(async (req, res) => {
       role: 'client',
     });
 
-    const invitationLink = `http://localhost:3000/verify-invitation?token=${invitationToken}`;
-    const subject = 'You have been invited to the Lean Client Portal';
-    const text = `Hello ${name},\n\nYou have been invited to the Lean Client Portal. Please click the following link to set up your account:\n\n${invitationLink}`;
-    const html = `<p>Hello ${name},</p><p>You have been invited to the Lean Client Portal. Please click the button below to set up your account:</p><a href="${invitationLink}">Set Up Account</a>`;
+    await sendInvitationEmail(tenantId, name, email, invitationToken);
 
-    try {
-      await sendEmail(email, subject, text, html);
-    } catch (error) {
-      console.error('Error sending invitation email:', error);
-    }
   } else {
     await UserTenantClientMapping.create({
       userId: user._id,
@@ -153,7 +150,12 @@ const updateClient = asyncHandler(async (req, res) => {
     throw new Error('Client not found for this tenant');
   }
 
-  const client = await Client.findOneAndUpdate({ _id: clientId }, req.body, { new: true, runValidators: true });
+  const updateData = {
+    ...req.body,
+    lastActivityDate: new Date(),
+  };
+
+  const client = await Client.findOneAndUpdate({ _id: clientId }, updateData, { new: true, runValidators: true });
 
   if (!client) {
     res.status(404);
@@ -185,10 +187,38 @@ const deleteClient = asyncHandler(async (req, res) => {
   res.status(200).json({ success: true, message: 'Client deleted successfully' });
 });
 
+// @desc    Resend invitation to a client
+// @route   POST /api/v1/clients/:tenantId/:clientId/resend-invitation
+// @access  Private
+const resendInvitation = asyncHandler(async (req, res) => {
+  const { tenantId, clientId } = req.params;
+
+  const client = await Client.findById(clientId);
+
+  if (!client) {
+    res.status(404);
+    throw new Error('Client not found');
+  }
+
+  if (client.invitationToken == null) {
+    res.status(400);
+    throw new Error('Client has already been activated and cannot be invited again.');
+  }
+
+  const invitationToken = crypto.randomBytes(32).toString('hex');
+  client.invitationToken = invitationToken;
+  await client.save();
+
+  await sendInvitationEmail(tenantId, client.name, client.email, invitationToken);
+
+  res.status(200).json({ success: true, message: 'Invitation resent successfully.' });
+});
+
 module.exports = {
   getClients,
   getClientById,
   createClient,
   updateClient,
   deleteClient,
+  resendInvitation,
 };

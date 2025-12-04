@@ -19,6 +19,8 @@ const projectRoutes = require('./routes/projectRoutes');
 const taskRoutes = require('./routes/taskRoutes');
 const invoiceRoutes = require('./routes/invoiceRoutes');
 const documentRoutes = require('./routes/documentRoutes');
+const emailTemplateRoutes = require('./routes/emailTemplateRoutes'); // Added email template routes
+
 // Swagger documentation
 const { swaggerUi, specs } = require('./config/swagger');
 
@@ -104,6 +106,7 @@ app.use(`${API_VERSION}/projects`, projectRoutes);
 app.use(`${API_VERSION}/tasks`, taskRoutes);
 app.use(`${API_VERSION}/invoices`, invoiceRoutes);
 app.use(`${API_VERSION}/documents`, documentRoutes);
+app.use(`${API_VERSION}/email-templates`, emailTemplateRoutes); // Added email template routes
 
 // Welcome message
 app.get('/', (req, res) => {
@@ -119,7 +122,8 @@ app.get('/', (req, res) => {
       projects: `${API_VERSION}/projects/:tenantId/:clientId`,
       tasks: `${API_VERSION}/tasks/:tenantId/:clientId/:projectId`,
       invoices: `${API_VERSION}/invoices/:tenantId/:clientId/:projectId`,
-      documents: `${API_VERSION}/documents/:clientId/:projectId`
+      documents: `${API_VERSION}/documents/:clientId/:projectId`,
+      emailTemplates: `${API_VERSION}/email-templates` // Added email templates endpoint
     }
   });
 });
@@ -142,7 +146,8 @@ app.all('*', (req, res) => {
       `GET ${API_VERSION}/projects/:tenantId/:clientId`,
       `GET ${API_VERSION}/tasks/:tenantId/:clientId/:projectId`,
       `GET ${API_VERSION}/invoices/:tenantId/:clientId/:projectId`,
-      `GET ${API_VERSION}/documents/:clientId/:projectId`
+      `GET ${API_VERSION}/documents/:clientId/:projectId`,
+      `GET ${API_VERSION}/email-templates` // Added email templates endpoint
     ]
   });
 });

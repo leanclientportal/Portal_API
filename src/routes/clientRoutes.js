@@ -5,7 +5,8 @@ const {
   getClientById,
   createClient,
   updateClient,
-  deleteClient
+  deleteClient,
+  resendInvitation
 } = require('../controllers/clientController');
 const {
   validate,
@@ -56,6 +57,12 @@ router.route('/:tenantId/:clientId') // Modified route to include tenantId
   .delete(
     validateParams(Joi.object({ tenantId: objectIdSchema.required(), clientId: objectIdSchema.required() })),
     deleteClient
+  );
+
+router.route('/:tenantId/:clientId/resend-invitation')
+  .post(
+    validateParams(Joi.object({ tenantId: objectIdSchema.required(), clientId: objectIdSchema.required() })),
+    resendInvitation
   );
 
 module.exports = router;

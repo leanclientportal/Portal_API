@@ -6,6 +6,7 @@ const Client = require('../models/Client');
 const Project = require('../models/Project');
 const UserTenantClientMapping = require('../models/UserTenantClientMapping');
 const TenantClientMapping = require('../models/TenantClientMapping');
+const EmailTemplate = require('../models/EmailTemplate');
 const asyncHandler = require('../middlewares/asyncHandler');
 const config = require('../config');
 const { generateNumericOTP } = require('../utils/otpGenerator');
@@ -34,12 +35,60 @@ const sendOtp = asyncHandler(async (req, res) => {
   );
 
   try {
-    await sendEmail(
-      email,
-      'Your OTP for Lean Client Portal',
-      `Your OTP is: ${otp}`,
-      `<p>Your OTP is: <strong>${otp}</strong></p>`
-    );
+    let tenantId = null;
+    if (user && user.activeProfile === 'tenant') {
+      tenantId = user.activeProfileId;
+    } else if (user && user.activeProfile === 'client') {
+      const mapping = await TenantClientMapping.findOne({ clientId: user.activeProfileId });
+      if (mapping) {
+        tenantId = mapping.tenantId;
+      }
+    }
+
+    if (user && user.activeProfile === 'client') {
+      let client = Client.findById(user.activeProfileId);
+      if (client) {
+        if (client.invitationToken)
+          return res.status(404).json({
+            message: 'Invitation not accepted. Please check your email and accept the invitation to continue.'
+          });
+
+        if (!client.isActive)
+          return res.status(404).json({
+            message: 'Account not activated. Please verify your email to activate your account.'
+          });
+      }
+      else
+        return res.status(404).json({ message: 'User not found. Please register.' });
+    }
+
+
+    let emailTemplate;
+    if (tenantId) {
+      emailTemplate = await EmailTemplate.findOne({ tenantId, templateId: config.Invitation_Email_Temaplate_Id, isActive: true });
+    }
+
+    if (!emailTemplate) {
+      emailTemplate = await EmailTemplate.findOne({ tenantId: null, templateId: config.Invitation_Email_Temaplate_Id, isActive: true });
+    }
+
+    let subject;
+    let html;
+    let text;
+
+    if (emailTemplate) {
+      subject = emailTemplate.subject;
+      html = emailTemplate.body.replace(/{{otp}}/g, otp);
+      text = html.replace(/<[^>]*>?/gm, '');
+    } else {
+      console.warn(`Warning: 'otp' email template not found. Using default email content.`);
+      subject = 'Your OTP for Lean Client Portal';
+      text = `Your OTP is: ${otp}`;
+      html = `<p>Your OTP is: <strong>${otp}</strong></p>`;
+    }
+
+    await sendEmail(email, subject, text, html);
+
   } catch (error) {
     console.error('Error sending OTP email:', error);
     return res.status(500).json({ message: 'Failed to send OTP email.' });
@@ -64,6 +113,7 @@ const verifyOtp = asyncHandler(async (req, res) => {
   let user = await User.findOne({ email });
   let activeProfileId;
   let activeProfileImage;
+  let profileName;
 
   if (type === 'registration' && !user) {
     let profileId;
@@ -72,11 +122,13 @@ const verifyOtp = asyncHandler(async (req, res) => {
       await newTenant.save();
       profileId = newTenant._id;
       activeProfileImage = newTenant.profileImageUrl;
+      profileName = newTenant.companyName;
     } else {
       const newClient = new Client({ name, email, phone });
       await newClient.save();
       profileId = newClient._id;
       activeProfileImage = newClient.profileImageUrl;
+      profileName = newClient.name;
     }
 
     const newUser = new User({
@@ -105,11 +157,13 @@ const verifyOtp = asyncHandler(async (req, res) => {
       const tenant = await Tenant.findById(activeProfileId);
       if (tenant) {
         activeProfileImage = tenant.profileImageUrl;
+        profileName = tenant.companyName;
       }
     } else if (user.activeProfile === 'client') {
       const client = await Client.findById(activeProfileId);
       if (client) {
         activeProfileImage = client.profileImageUrl;
+        profileName = client.name;
       }
     }
   }
@@ -124,7 +178,8 @@ const verifyOtp = asyncHandler(async (req, res) => {
       userId: user._id,
       activeProfile: user.activeProfile,
       activeProfileId,
-      activeProfileImage
+      activeProfileImage,
+      profileName
     });
   } else {
     return res.status(400).json({ message: "Could not process user." });
@@ -264,18 +319,18 @@ const verifyInvitation = asyncHandler(async (req, res) => {
     return res.status(400).json({ message: 'Invitation token is required' });
   }
 
-  const user = await User.findOne({
+  const client = await Client.findOne({
     invitationToken: token,
     status: 'pending'
   });
 
-  if (!user) {
+  if (!client) {
     return res.status(400).json({ message: 'Invalid or expired invitation token.' });
   }
 
-  user.status = 'active';
-  user.invitationToken = undefined;
-  await user.save();
+  client.isActive = 'active';
+  user.invitationToken = null;
+  await client.save();
 
   res.status(200).json({
     success: true,
@@ -323,15 +378,18 @@ const switchAccount = asyncHandler(async (req, res) => {
   user.lastActiveDate = new Date();
   await user.save();
   let activeProfileImage;
+  let profileName;
   if (activeProfile === 'tenant') {
     const tenant = await Tenant.findById(masterId);
     if (tenant) {
       activeProfileImage = tenant.profileImageUrl;
+      profileName = tenant.companyName;
     }
   } else if (activeProfile === 'client') {
     const client = await Client.findById(masterId);
     if (client) {
       activeProfileImage = client.profileImageUrl;
+      profileName = client.name;
     }
   }
 
@@ -344,7 +402,8 @@ const switchAccount = asyncHandler(async (req, res) => {
     userId: user._id,
     activeProfile: user.activeProfile,
     activeProfileId: user.activeProfileId,
-    activeProfileImage
+    activeProfileImage,
+    profileName
   });
 });
 
