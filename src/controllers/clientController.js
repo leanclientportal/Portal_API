@@ -96,10 +96,10 @@ const createClient = asyncHandler(async (req, res) => {
       throw new Error('A client with this email already exists and is mapped to this tenant');
     }
     else {
-      client = await Client.create({ name, email, phone, profileImageUrl, isActive: false, lastActivityDate: new Date(), invitationToken });
+      client = new Client({ name, email, phone, profileImageUrl, isActive: false, lastActivityDate: new Date(), invitationToken });
     }
   } else {
-    client = await Client.create({ name, email, phone, profileImageUrl, isActive: false, lastActivityDate: new Date(), invitationToken });
+    client = new Client({ name, email, phone, profileImageUrl, isActive: false, lastActivityDate: new Date(), invitationToken });
   }
 
   await TenantClientMapping.create({
