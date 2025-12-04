@@ -24,8 +24,6 @@ const userSchema = new mongoose.Schema({
   },
   phone: {
     type: String,
-    minlength: 7,
-    maxlength: 20
   },
   activeProfile: {
     type: String

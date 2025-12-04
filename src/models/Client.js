@@ -15,8 +15,6 @@ const clientSchema = new mongoose.Schema({
   },
   phone: {
     type: String,
-    minlength: 7,
-    maxlength: 20
   },
   isActive: {
     type: Boolean,
