@@ -53,7 +53,7 @@ const sendOtp = asyncHandler(async (req, res) => {
             message: 'Invitation not accepted. Please check your email and accept the invitation to continue.'
           });
 
-        if (!client.isActive)
+        if (client.isActive === false)
           return res.status(404).json({
             message: 'Account not activated. Please verify your email to activate your account.'
           });
@@ -118,13 +118,13 @@ const verifyOtp = asyncHandler(async (req, res) => {
   if (type === 'registration' && !user) {
     let profileId;
     if (activeProfile === 'tenant') {
-      const newTenant = new Tenant({ companyName: name, email, phone });
+      const newTenant = new Tenant({ companyName: name, email, phone, isActive: true });
       await newTenant.save();
       profileId = newTenant._id;
       activeProfileImage = newTenant.profileImageUrl;
       profileName = newTenant.companyName;
     } else {
-      const newClient = new Client({ name, email, phone });
+      const newClient = new Client({ name, email, phone, isActive: true });
       await newClient.save();
       profileId = newClient._id;
       activeProfileImage = newClient.profileImageUrl;
