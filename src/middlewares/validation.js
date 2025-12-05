@@ -44,14 +44,14 @@ const validationSchemas = {
     create: Joi.object({
       name: Joi.string().required().min(2).max(100),
       email: Joi.string().email().required(),
-      phone: Joi.string().optional(),
+      phone: Joi.string().allow('', null).optional(),
       isActive: Joi.boolean(),
       profileImageUrl: Joi.string().uri().optional(),
     }),
     update: Joi.object({
       name: Joi.string().min(2).max(100),
       email: Joi.string().email(),
-      phone: Joi.string().optional(),
+      phone: Joi.string().allow('', null).optional(),
       isActive: Joi.boolean(),
       profileImageUrl: Joi.string().uri().optional(),
     })
