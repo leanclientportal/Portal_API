@@ -81,9 +81,9 @@ const createClient = asyncHandler(async (req, res) => {
   const { tenantId } = req.params;
   const { name, email, phone, profileImageUrl } = req.body;
 
-  if (!name || !email || !phone) {
+  if (!name || !email) {
     res.status(400);
-    throw new Error('Please provide name, email, and phone');
+    throw new Error('Please provide name and email');
   }
 
   const invitationToken = crypto.randomBytes(32).toString('hex');
@@ -96,10 +96,10 @@ const createClient = asyncHandler(async (req, res) => {
       throw new Error('A client with this email already exists and is mapped to this tenant');
     }
     else {
-      client = new Client({ name, email, phone, profileImageUrl, isActive: false, lastActivityDate: new Date(), invitationToken });
+      client = await Client.create({ name, email, phone, profileImageUrl, isActive: false, lastActivityDate: new Date(), invitationToken });
     }
   } else {
-    client = new Client({ name, email, phone, profileImageUrl, isActive: false, lastActivityDate: new Date(), invitationToken });
+    client = await Client.create({ name, email, phone, profileImageUrl, isActive: false, lastActivityDate: new Date(), invitationToken });
   }
 
   await TenantClientMapping.create({
