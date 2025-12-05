@@ -28,7 +28,7 @@ const getClients = asyncHandler(async (req, res) => {
   if (status) query.status = status;
 
   const clients = await Client.find(query)
-    .select('-__v')
+    .select('-__v +invitationToken')
     .sort({ createdAt: -1 })
     .limit(parseInt(limit))
     .skip((parseInt(page) - 1) * parseInt(limit));
@@ -96,10 +96,10 @@ const createClient = asyncHandler(async (req, res) => {
       throw new Error('A client with this email already exists and is mapped to this tenant');
     }
     else {
-      client = await Client.create({ name, email, phone, profileImageUrl, isActive: false, lastActivityDate: new Date(), invitationToken });
+      client = await Client.create({ name, email, phone, profileImageUrl, isActive: true, lastActivityDate: new Date(), invitationToken });
     }
   } else {
-    client = await Client.create({ name, email, phone, profileImageUrl, isActive: false, lastActivityDate: new Date(), invitationToken });
+    client = await Client.create({ name, email, phone, profileImageUrl, isActive: true, lastActivityDate: new Date(), invitationToken });
   }
 
   await TenantClientMapping.create({
