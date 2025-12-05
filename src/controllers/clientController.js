@@ -64,7 +64,7 @@ const getClientById = asyncHandler(async (req, res) => {
     throw new Error('Client not found for this tenant');
   }
 
-  const client = await Client.findOne({ _id: clientId, isActive: true }).select('-__v');
+  const client = await Client.findOne({ _id: clientId, isActive: true }).select('-__v +invitationToken');
 
   if (!client) {
     res.status(404);
