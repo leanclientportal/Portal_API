@@ -7,6 +7,7 @@ const UserTenantClientMapping = require('../models/UserTenantClientMapping');
 const asyncHandler = require('../middlewares/asyncHandler');
 const { sendInvitationEmail } = require('../utils/emailUtils');
 const config = require('../config');
+const { string } = require('joi');
 
 // @desc    Get all clients for a tenant
 // @route   GET /api/v1/clients/:tenantId
@@ -199,8 +200,8 @@ const resendInvitation = asyncHandler(async (req, res) => {
     res.status(404);
     throw new Error('Client not found');
   }
-
-  if (client.invitationToken == null) {
+  console.log(client);
+  if (client.invitationToken === null) {
     res.status(400);
     throw new Error('Client has already been activated and cannot be invited again.');
   }
