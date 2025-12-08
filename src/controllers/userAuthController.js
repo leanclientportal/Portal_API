@@ -328,7 +328,7 @@ const verifyInvitation = asyncHandler(async (req, res) => {
   }
 
   client.isActive = true;
-  user.invitationToken = null;
+  client.invitationToken = null;
   await client.save();
 
   res.status(200).json({

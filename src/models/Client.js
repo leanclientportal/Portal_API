@@ -28,7 +28,6 @@ const clientSchema = new mongoose.Schema({
   },
   invitationToken: {
     type: String,
-    select: false
   }
 }, {
   timestamps: true,
