@@ -8,7 +8,7 @@ const TenantClientMapping = require('../models/TenantClientMapping');
 const getProjects = asyncHandler(async (req, res) => {
   const { activeProfile, activeProfileId } = req.params;
   const { page = 1, limit = 20, search, status } = req.query;
-  const query = { isActive: true };
+  const query = { isDeleted: true };
 
   if (!activeProfile || !activeProfileId) {
     return res.status(400).json({ success: false, message: 'Active profile and ID are required' });
@@ -43,7 +43,6 @@ const getProjects = asyncHandler(async (req, res) => {
   const projects = await Project.find(query)
     .populate('clientId', 'name email company')
     .populate('tenantId', 'companyName email company')
-    .select('-__v')
     .sort({ createdAt: -1 })
     .limit(limit * 1)
     .skip((page - 1) * limit);
@@ -75,9 +74,9 @@ const createProject = asyncHandler(async (req, res) => {
     name: req.body.name,
     description: req.body.description,
     status: req.body.status,
-    isActive: req.body.isActive,
     tenantId,
-    clientId
+    clientId,
+    lastActivityDate: new Date(),
   });
 
   await project.save();
@@ -120,9 +119,15 @@ const getProject = asyncHandler(async (req, res) => {
 const updateProject = asyncHandler(async (req, res) => {
   const { projectId } = req.params;
 
+
+  const updateData = {
+    ...req.body,
+    lastActivityDate: new Date(),
+  };
+
   const project = await Project.findOneAndUpdate(
     { _id: projectId },
-    req.body,
+    updateData,
     {
       new: true,
       runValidators: true

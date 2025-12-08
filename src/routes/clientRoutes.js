@@ -6,7 +6,8 @@ const {
   createClient,
   updateClient,
   deleteClient,
-  resendInvitation
+  resendInvitation,
+  getClientListForDropdown
 } = require('../controllers/clientController');
 const {
   validate,
@@ -41,6 +42,12 @@ router.route('/:tenantId')
     upload.single('profile'),
     validate(validationSchemas.client.create),
     createClient
+  );
+
+router.route('/:tenantId/dropdown')
+  .get(
+    validateParams(paramSchemaList),
+    getClientListForDropdown
   );
 
 router.route('/:tenantId/:clientId') // Modified route to include tenantId

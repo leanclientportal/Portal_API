@@ -52,6 +52,26 @@ const getClients = asyncHandler(async (req, res) => {
   });
 });
 
+// @desc    Get client list for dropdown
+// @route   GET /api/v1/clients/:tenantId/dropdown
+// @access  Private
+const getClientListForDropdown = asyncHandler(async (req, res) => {
+  const { tenantId } = req.params;
+
+  const clientMappings = await TenantClientMapping.find({ tenantId }).select('clientId');
+  const clientIds = clientMappings.map(mapping => mapping.clientId);
+
+  const clients = await Client.find({ _id: { $in: clientIds }, isActive: true })
+    .select('_id name')
+    .sort({ name: 1 });
+
+  res.status(200).json({
+    success: true,
+    message: 'Client list for dropdown retrieved successfully',
+    data: clients,
+  });
+});
+
 // @desc    Get a single client by client id
 // @route   GET /api/v1/clients/:tenantId/:clientId
 // @access  Private
@@ -221,4 +241,5 @@ module.exports = {
   updateClient,
   deleteClient,
   resendInvitation,
+  getClientListForDropdown
 };

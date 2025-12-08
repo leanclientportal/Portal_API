@@ -23,12 +23,15 @@ const projectSchema = new mongoose.Schema({
   },
   status: {
     type: String,
-    enum: ['planning', 'active', 'on-hold', 'completed', 'cancelled'],
-    default: 'planning'
+    enum: [, 'active', 'on-hold', 'completed'],
+    default: 'active'
   },
-  isActive: {
+  isDeleted: {
     type: Boolean,
-    default: true
+    default: false
+  },
+  lastActivityDate: {
+    type: Date,
   }
 }, {
   timestamps: true,
@@ -36,7 +39,5 @@ const projectSchema = new mongoose.Schema({
 });
 
 // Indexes for multi-tenant queries
-projectSchema.index({ tenantId: 1, clientId: 1, isActive: 1 });
-projectSchema.index({ tenantId: 1, status: 1 });
 
 module.exports = mongoose.model('Project', projectSchema);

@@ -24,7 +24,6 @@ const getPlans = asyncHandler(async (req, res) => {
 
   // Execute query with pagination
   const plans = await Plan.find(query)
-    .select('-__v')
     .sort({ priority: -1, createdAt: -1 })
     .limit(parseInt(limit))
     .skip((parseInt(page) - 1) * parseInt(limit));
@@ -52,7 +51,7 @@ const getPlans = asyncHandler(async (req, res) => {
 const getPlanById = asyncHandler(async (req, res) => {
   const { planId } = req.params;
 
-  const plan = await Plan.findById(planId).select('-__v');
+  const plan = await Plan.findById(planId);
 
   if (!plan) {
     return res.status(404).json({

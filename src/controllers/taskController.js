@@ -29,7 +29,6 @@ const getTasks = asyncHandler(async (req, res) => {
   // Execute query with pagination
   const tasks = await Task.find(query)
     .populate('projectId', 'name')
-    .select('-__v')
     .sort({ createdAt: -1 })
     .limit(limit * 1)
     .skip((page - 1) * limit);
