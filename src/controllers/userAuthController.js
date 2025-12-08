@@ -320,15 +320,14 @@ const verifyInvitation = asyncHandler(async (req, res) => {
   }
 
   const client = await Client.findOne({
-    invitationToken: token,
-    status: 'pending'
+    invitationToken: token
   });
 
   if (!client) {
     return res.status(400).json({ message: 'Invalid or expired invitation token.' });
   }
 
-  client.isActive = 'active';
+  client.isActive = true;
   user.invitationToken = null;
   await client.save();
 
