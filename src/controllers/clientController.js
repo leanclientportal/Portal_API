@@ -29,7 +29,6 @@ const getClients = asyncHandler(async (req, res) => {
   if (status) query.status = status;
 
   const clients = await Client.find(query)
-    .select('-__v +invitationToken')
     .sort({ createdAt: -1 })
     .limit(parseInt(limit))
     .skip((parseInt(page) - 1) * parseInt(limit));
@@ -65,7 +64,7 @@ const getClientById = asyncHandler(async (req, res) => {
     throw new Error('Client not found for this tenant');
   }
 
-  const client = await Client.findOne({ _id: clientId, isActive: true }).select('-__v +invitationToken');
+  const client = await Client.findOne({ _id: clientId, isActive: true });
 
   if (!client) {
     res.status(404);

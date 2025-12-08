@@ -206,7 +206,7 @@ const validationSchemas = {
     updateDetails: Joi.object({
       name: Joi.string().min(2).max(200),
       email: Joi.string().email(),
-      phone: Joi.string().min(7).max(20)
+      phone: Joi.string().allow('', null).optional()
     }),
     updatePassword: Joi.object({
       currentPassword: Joi.string().required(),
