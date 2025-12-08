@@ -28,7 +28,7 @@ const paramSchemaDetail = Joi.object({
 });
 
 router.route('/:activeProfile/:activeProfileId')
-  .get(
+  .post(
     validateQuery(validationSchemas.pagination),
     getProjects
   );

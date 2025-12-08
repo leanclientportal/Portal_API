@@ -24,11 +24,16 @@ exports.getTenantsByClientId = asyncHandler(async (req, res, next) => {
   const tenantIds = mappings.map(mapping => mapping.tenantId);
 
   // Find all tenants that match the extracted IDs
-  const tenants = await Tenant.find({ '_id': { $in: tenantIds } });
+  const tenants = await Tenant.find({ '_id': { $in: tenantIds } }).select('_id name');
+
+  const formattedTenants = tenants.map(tenant => ({
+    value: tenant._id,
+    label: tenant.companyName,
+  }));
 
   res.status(200).json({
     success: true,
     count: tenants.length,
-    data: tenants,
+    data: formattedTenants,
   });
 });

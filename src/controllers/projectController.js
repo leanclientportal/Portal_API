@@ -3,12 +3,14 @@ const asyncHandler = require('../middlewares/asyncHandler');
 const TenantClientMapping = require('../models/TenantClientMapping');
 
 // @desc    Get all projects
-// @route   GET /api/v1/projects/:activeProfile/:activeProfileId
+// @route   POST /api/v1/projects/:activeProfile/:activeProfileId
 // @access  Private
 const getProjects = asyncHandler(async (req, res) => {
   const { activeProfile, activeProfileId } = req.params;
-  const { page = 1, limit = 20, search, status } = req.query;
-  const query = { isDeleted: true };
+  const { page = 1, limit = 20, status } = req.query;
+  const { searchTerm, selectedClient, dateFrom, dateTo } = req.body;
+
+  const query = { isDeleted: false };
 
   if (!activeProfile || !activeProfileId) {
     return res.status(400).json({ success: false, message: 'Active profile and ID are required' });
@@ -16,9 +18,13 @@ const getProjects = asyncHandler(async (req, res) => {
 
   if (activeProfile === 'tenant') {
     query.tenantId = activeProfileId;
-    const clientMappings = await TenantClientMapping.find({ tenantId: activeProfileId }).select('clientId');
-    const clientIds = clientMappings.map(mapping => mapping.clientId);
-    query.clientId = { $in: clientIds };
+    if (selectedClient) {
+      query.clientId = selectedClient;
+    } else {
+      const clientMappings = await TenantClientMapping.find({ tenantId: activeProfileId }).select('clientId');
+      const clientIds = clientMappings.map(mapping => mapping.clientId);
+      query.clientId = { $in: clientIds };
+    }
   } else if (activeProfile === 'client') {
     query.clientId = activeProfileId;
     const tenantMappings = await TenantClientMapping.find({ clientId: activeProfileId }).select('tenantId');
@@ -28,11 +34,21 @@ const getProjects = asyncHandler(async (req, res) => {
     return res.status(400).json({ success: false, message: 'Invalid active profile' });
   }
 
-  if (search) {
+  if (searchTerm) {
     query.$or = [
-      { name: { $regex: search, $options: 'i' } },
-      { description: { $regex: search, $options: 'i' } }
+      { name: { $regex: searchTerm, $options: 'i' } },
+      { description: { $regex: searchTerm, $options: 'i' } }
     ];
+  }
+
+  if (dateFrom || dateTo) {
+    query.createdAt = {};
+    if (dateFrom) {
+      query.createdAt.$gte = new Date(dateFrom);
+    }
+    if (dateTo) {
+      query.createdAt.$lte = new Date(dateTo);
+    }
   }
 
   if (status) {
@@ -77,6 +93,7 @@ const createProject = asyncHandler(async (req, res) => {
     tenantId,
     clientId,
     lastActivityDate: new Date(),
+    isDeleted: false,
   });
 
   await project.save();
@@ -96,7 +113,7 @@ const getProject = asyncHandler(async (req, res) => {
 
   const project = await Project.findOne({
     _id: projectId,
-    isActive: true
+    isDeleted: false
   }).populate('clientId', 'name email company').populate('tenantId', 'name email company');
 
   if (!project) {
@@ -118,7 +135,6 @@ const getProject = asyncHandler(async (req, res) => {
 // @access  Private
 const updateProject = asyncHandler(async (req, res) => {
   const { projectId } = req.params;
-
 
   const updateData = {
     ...req.body,
@@ -156,7 +172,7 @@ const deleteProject = asyncHandler(async (req, res) => {
 
   const project = await Project.findOneAndUpdate(
     { _id: projectId },
-    { isActive: false },
+    { isDeleted: true },
     { new: true }
   );
 

@@ -65,10 +65,15 @@ const getClientListForDropdown = asyncHandler(async (req, res) => {
     .select('_id name')
     .sort({ name: 1 });
 
+  const formattedClients = clients.map(client => ({
+    value: client._id,
+    label: client.name,
+  }));
+
   res.status(200).json({
     success: true,
     message: 'Client list for dropdown retrieved successfully',
-    data: clients,
+    data: formattedClients,
   });
 });
 
