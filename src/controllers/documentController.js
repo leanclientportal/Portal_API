@@ -35,7 +35,7 @@ const getDocuments = asyncHandler(async (req, res) => {
 // @access  Private
 const getDocument = asyncHandler(async (req, res) => {
   const { projectId, documentId } = req.params;
-  const document = await Document.findOne({ _id: documentId, projectId, isActive: true })
+  const document = await Document.findOne({ _id: documentId, projectId })
 
   if (!document) {
     return res.status(404).json({ success: false, message: 'Document not found' });
@@ -49,23 +49,32 @@ const getDocument = asyncHandler(async (req, res) => {
 // @access  Private
 const uploadDocument = asyncHandler(async (req, res) => {
   const { projectId } = req.params;
-  const { name, docUrl, description, uploadedBy, uploaderId } = req.body;
+  const { name, docUrl, uploaderId, isOverwrite } = req.body;
 
   const project = await Project.findById(projectId);
   if (!project) {
     return res.status(404).json({ success: false, message: 'Project not found' });
   }
 
-  const document = new Document({
-    projectId,
-    name,
-    description,
-    docUrl,
-    uploadedBy,
-    uploaderId
-  });
+  let document = await Document.findOne({ name, projectId });
 
-  await document.save();
+  if (document && !isOverwrite) {
+    return res.status(400).json({ success: false, message: 'Document with this name already exists.' });
+  }
+
+  if (document && isOverwrite) {
+    document.docUrl = docUrl;
+    document.uploadedBy = uploaderId;
+    await document.save();
+    return res.status(200).json({ success: true, data: document });
+  }
+
+  document = await Document.create({
+    name,
+    docUrl,
+    projectId,
+    uploadedBy: uploaderId,
+  });
 
   res.status(201).json({ success: true, data: document });
 });
@@ -75,11 +84,11 @@ const uploadDocument = asyncHandler(async (req, res) => {
 // @access  Private
 const updateDocument = asyncHandler(async (req, res) => {
   const { projectId, documentId } = req.params;
-  const { name, docUrl, description, uploadedBy, uploaderId } = req.body;
+  const { name, docUrl, uploadedBy, uploaderId, isOverwrite } = req.body;
 
   const document = await Document.findOneAndUpdate(
     { _id: documentId, projectId, isActive: true },
-    { name, docUrl, description, uploadedBy, uploaderId },
+    { name, docUrl, uploadedBy, uploaderId, isOverwrite },
     { new: true, runValidators: true }
   );
 

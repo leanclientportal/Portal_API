@@ -40,7 +40,7 @@ const getInvoices = asyncHandler(async (req, res) => {
 // @access  Private
 const createInvoice = asyncHandler(async (req, res) => {
   const { projectId } = req.params;
-  const { invoiceUrl, title, description, status, amount, dueDate, paymentLink } = req.body;
+  const { invoiceUrl, title, status, amount, dueDate, paymentLink } = req.body;
 
   const project = await Project.findById(projectId);
   if (!project) {
@@ -51,7 +51,6 @@ const createInvoice = asyncHandler(async (req, res) => {
     projectId,
     invoiceUrl,
     title,
-    description,
     status,
     amount,
     dueDate,
@@ -70,12 +69,11 @@ const createInvoice = asyncHandler(async (req, res) => {
 // @access  Private
 const updateInvoice = asyncHandler(async (req, res) => {
   const { projectId, invoiceId } = req.params;
-  const { invoiceUrl, title, description, status, amount, dueDate, paymentLink } = req.body;
+  const { invoiceUrl, title, status, amount, dueDate, paymentLink } = req.body;
 
   const updateFields = {
     invoiceUrl,
     title,
-    description,
     status,
     amount,
     dueDate,

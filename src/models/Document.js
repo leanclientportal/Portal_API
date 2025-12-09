@@ -1,3 +1,4 @@
+const { boolean } = require('joi');
 const mongoose = require('mongoose');
 
 const documentSchema = new mongoose.Schema({
@@ -11,23 +12,18 @@ const documentSchema = new mongoose.Schema({
     required: true,
     trim: true
   },
-  description: {
-    type: String,
-    required: false,
-    trim: true
-  },
   docUrl: {
     type: String,
     required: true,
     trim: true
   },
-  tag: {
-    type: String,
-    trim: true
-  },
   createdDate: {
     type: Date,
     default: Date.now
+  },
+  isOverwrite : {
+    type: boolean,
+    default: false
   },
   uploadedBy: {
     type: String,

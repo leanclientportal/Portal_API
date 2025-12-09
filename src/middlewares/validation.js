@@ -97,19 +97,17 @@ const validationSchemas = {
   document: {
     create: Joi.object({
       name: Joi.string().required().min(1).max(300),
-      description: Joi.string().max(2000),
       docUrl: Joi.string().uri().required(),
-      tag: Joi.string().optional(),
       uploadedBy: Joi.string().valid('tenant', 'client'),
-      uploaderId: objectIdSchema
+      uploaderId: objectIdSchema,
+      isOverwrite:  Joi.boolean()
     }),
     update: Joi.object({
       name: Joi.string().min(1).max(300),
-      description: Joi.string().max(2000),
       docUrl: Joi.string().uri(),
-      tag: Joi.string().optional(),
       uploadedBy: Joi.string().valid('tenant', 'client'),
-      uploaderId: objectIdSchema
+      uploaderId: objectIdSchema,
+      isOverwrite:  Joi.boolean()
     })
   },
 
@@ -118,7 +116,6 @@ const validationSchemas = {
     create: Joi.object({
       invoiceUrl: Joi.string().uri(),
       title: Joi.string().optional(),
-      description: Joi.string().optional(),
       status: Joi.string().valid('pending', 'paid', 'overdue'),
       amount: Joi.number().optional(),
       dueDate: Joi.date(),
@@ -127,7 +124,6 @@ const validationSchemas = {
     update: Joi.object({
       invoiceUrl: Joi.string().uri(),
       title: Joi.string().optional(),
-      description: Joi.string().optional(),
       status: Joi.string().valid('pending', 'paid', 'overdue'),
       amount: Joi.number().min(0),
       dueDate: Joi.date(),
