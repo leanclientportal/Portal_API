@@ -7,7 +7,7 @@ const TenantClientMapping = require('../models/TenantClientMapping');
 // @access  Private
 const getProjects = asyncHandler(async (req, res) => {
   const { activeProfile, activeProfileId } = req.params;
-  const { page = 1, limit = 20, status } = req.query;
+  const { page = 1, limit = 20 } = req.query;
   const { searchTerm, selectedClient, dateFrom, dateTo } = req.body;
 
   const query = { isDeleted: false };
@@ -49,10 +49,6 @@ const getProjects = asyncHandler(async (req, res) => {
     if (dateTo) {
       query.createdAt.$lte = new Date(dateTo);
     }
-  }
-
-  if (status) {
-    query.status = status;
   }
 
   // Execute query with pagination

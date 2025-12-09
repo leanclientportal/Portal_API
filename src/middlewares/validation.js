@@ -62,14 +62,12 @@ const validationSchemas = {
     create: Joi.object({
       name: Joi.string().required().min(2).max(200),
       description: Joi.string().max(2000),
-      status: Joi.string().valid('planning', 'active', 'on-hold', 'completed', 'cancelled'),
-      isActive: Joi.boolean()
+      status: Joi.string().valid('active', 'on-hold', 'completed'),
     }),
     update: Joi.object({
       name: Joi.string().min(2).max(200),
       description: Joi.string().max(2000),
-      status: Joi.string().valid('planning', 'active', 'on-hold', 'completed', 'cancelled'),
-      isActive: Joi.boolean()
+      status: Joi.string().valid('active', 'on-hold', 'completed'),
     })
   },
 
