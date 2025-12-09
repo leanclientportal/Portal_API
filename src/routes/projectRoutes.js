@@ -33,7 +33,7 @@ router.route('/:activeProfile/:activeProfileId')
     getProjects
   );
 
-router.route('/:tenantId/:clientId')
+router.route('/:tenantId/:clientId/add')
   .post(
     validateParams(paramSchemaList),
     validate(validationSchemas.project.create),
