@@ -108,8 +108,7 @@ const getProject = asyncHandler(async (req, res) => {
   const { projectId } = req.params;
 
   const project = await Project.findOne({
-    _id: projectId,
-    isDeleted: false
+    _id: projectId
   }).populate('clientId', 'name email company').populate('tenantId', 'name email company');
 
   if (!project) {
