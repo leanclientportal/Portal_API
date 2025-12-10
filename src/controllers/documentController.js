@@ -15,7 +15,7 @@ const getDocuments = asyncHandler(async (req, res) => {
   }
 
   const documents = await Document.find(query)
-    // .populate('uploadedBy', 'name')
+    .populate('uploaderId', 'email')
     .sort({ createdAt: -1 })
     .skip((page - 1) * limit)
     .limit(parseInt(limit));
