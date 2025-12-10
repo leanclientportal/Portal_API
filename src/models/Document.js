@@ -22,7 +22,7 @@ const documentSchema = new mongoose.Schema({
     default: Date.now
   },
   isOverwrite : {
-    type: boolean,
+    type: Boolean,
     default: false
   },
   uploadedBy: {
