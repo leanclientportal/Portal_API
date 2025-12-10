@@ -64,7 +64,7 @@ const uploadDocument = asyncHandler(async (req, res) => {
 
   if (document && isOverwrite) {
     document.docUrl = docUrl;
-    document.uploadedBy = uploaderBy;
+    document.uploadedBy = uploadedBy;
     document.uploaderId = uploaderId;
     document.isOverwrite = true;
     await document.save();
