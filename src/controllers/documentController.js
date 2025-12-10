@@ -49,7 +49,7 @@ const getDocument = asyncHandler(async (req, res) => {
 // @access  Private
 const uploadDocument = asyncHandler(async (req, res) => {
   const { projectId } = req.params;
-  const { name, docUrl, uploaderId, isOverwrite } = req.body;
+  const { name, docUrl, uploaderBy, uploaderId, isOverwrite } = req.body;
 
   const project = await Project.findById(projectId);
   if (!project) {
@@ -64,7 +64,9 @@ const uploadDocument = asyncHandler(async (req, res) => {
 
   if (document && isOverwrite) {
     document.docUrl = docUrl;
-    document.uploadedBy = uploaderId;
+    document.uploadedBy = uploaderBy;
+    document.uploaderId = uploaderId;
+    document.isOverwrite = true;
     await document.save();
     return res.status(200).json({ success: true, data: document });
   }
@@ -73,7 +75,9 @@ const uploadDocument = asyncHandler(async (req, res) => {
     name,
     docUrl,
     projectId,
-    uploadedBy: uploaderId,
+    uploaderBy,
+    uploaderId,
+    isOverwrite
   });
 
   res.status(201).json({ success: true, data: document });
