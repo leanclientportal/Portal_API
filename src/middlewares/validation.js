@@ -98,14 +98,14 @@ const validationSchemas = {
     create: Joi.object({
       name: Joi.string().required().min(1).max(300),
       docUrl: Joi.string().uri().required(),
-      uploadedBy: Joi.string().valid('tenant', 'client'),
+      uploadedBy: Joi.string().valid('Tenant', 'Client'),
       uploaderId: objectIdSchema,
       isOverwrite:  Joi.boolean()
     }),
     update: Joi.object({
       name: Joi.string().min(1).max(300),
       docUrl: Joi.string().uri(),
-      uploadedBy: Joi.string().valid('tenant', 'client'),
+      uploadedBy: Joi.string().valid('Tenant', 'Client'),
       uploaderId: objectIdSchema,
       isOverwrite:  Joi.boolean()
     })
