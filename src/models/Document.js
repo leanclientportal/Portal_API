@@ -27,10 +27,11 @@ const documentSchema = new mongoose.Schema({
   },
   uploadedBy: {
     type: String,
-    enum: ['tenant', 'client']
+    enum: ['Tenant', 'Client'] // Changed enum values to match model names
   },
   uploaderId: {
-    type: mongoose.Schema.Types.ObjectId
+    type: mongoose.Schema.Types.ObjectId,
+    refPath: 'uploadedBy' // Dynamically reference 'Tenant' or 'Client' based on uploadedBy
   }
 }, {
   timestamps: false,

@@ -75,7 +75,7 @@ const uploadDocument = asyncHandler(async (req, res) => {
     name,
     docUrl,
     projectId,
-    uploaderBy,
+    uploadedBy,
     uploaderId,
     isOverwrite
   });
