@@ -49,7 +49,7 @@ const getDocument = asyncHandler(async (req, res) => {
 // @access  Private
 const uploadDocument = asyncHandler(async (req, res) => {
   const { projectId } = req.params;
-  const { name, docUrl, uploaderBy, uploaderId, isOverwrite } = req.body;
+  const { name, docUrl, uploadedBy, uploaderId, isOverwrite } = req.body;
 
   const project = await Project.findById(projectId);
   if (!project) {
