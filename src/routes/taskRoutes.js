@@ -34,12 +34,10 @@ const paramSchemaDetail = Joi.object({
 
 const taskListQuery = validationSchemas.pagination.keys({
   status: Joi.string().valid('todo', 'in-progress', 'in-review', 'completed', 'cancelled'),
-  visibleToClient: Joi.boolean()
 });
 
 router.route('/:projectId/:activeProfile')
   .get(
-    validateParams(paramSchemaGetList),
     validateQuery(taskListQuery),
     getTasks
   )
