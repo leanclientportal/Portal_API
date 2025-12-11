@@ -21,8 +21,9 @@ const getTasks = asyncHandler(async (req, res) => {
   if (status) {
     query.status = status;
   }
-  if (activeProfile === "client")
+  if (activeProfile === 'client') {
     query.visibleToClient = true;
+  }
 
   // Execute query with pagination
   const tasks = await Task.find(query)
