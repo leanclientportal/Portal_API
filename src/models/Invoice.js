@@ -8,7 +8,7 @@ const invoiceSchema = new mongoose.Schema({
   },
   invoiceUrl: {
     type: String,
-    required: true,
+    required: false,
     trim: true
   },
   title: {
