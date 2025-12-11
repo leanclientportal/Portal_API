@@ -117,6 +117,7 @@ const validationSchemas = {
       invoiceUrl: Joi.string().uri().optional(),
       title: Joi.string().required().min(2).max(200),
       status: Joi.string().valid('pending', 'paid'),
+      invoiceDate: Joi.date().required(),
       amount: Joi.number().required(),
       dueDate: Joi.date().required(),
       paymentLink: Joi.string().optional(),
@@ -124,6 +125,7 @@ const validationSchemas = {
     update: Joi.object({
       invoiceUrl: Joi.string().uri().optional(),
       title: Joi.string().required().min(2).max(200),
+      invoiceDate: Joi.date().required(),
       status: Joi.string().valid('pending', 'paid'),
       amount: Joi.number().required(),
       dueDate: Joi.date().required(),
