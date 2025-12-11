@@ -120,6 +120,7 @@ const validationSchemas = {
       invoiceDate: Joi.date().required(),
       amount: Joi.number().required(),
       dueDate: Joi.date().required(),
+      paidDate: Joi.date().optional(),
       paymentLink: Joi.string().optional(),
     }),
     update: Joi.object({
@@ -129,6 +130,7 @@ const validationSchemas = {
       status: Joi.string().valid('pending', 'paid'),
       amount: Joi.number().required(),
       dueDate: Joi.date().required(),
+      paidDate: Joi.date().optional(),
       paymentLink: Joi.string().optional(),
     })
   },
