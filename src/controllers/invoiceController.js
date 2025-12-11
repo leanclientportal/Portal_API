@@ -55,7 +55,7 @@ const createInvoice = asyncHandler(async (req, res) => {
     amount,
     invoiceDate,
     dueDate,
-    paidDate
+    paidDate,
     paymentLink
   });
 
