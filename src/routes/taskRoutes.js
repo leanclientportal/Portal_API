@@ -23,6 +23,10 @@ const paramSchemaList = Joi.object({
   projectId: objectIdSchema.required()
 });
 
+const paramSchemaGetList = Joi.object({
+  projectId: objectIdSchema.required(),
+  activeProfile: objectIdSchema.required()
+});
 const paramSchemaDetail = Joi.object({
   projectId: objectIdSchema.required(),
   taskId: objectIdSchema.required()
@@ -33,9 +37,9 @@ const taskListQuery = validationSchemas.pagination.keys({
   visibleToClient: Joi.boolean()
 });
 
-router.route('/:projectId/:activeProfileId')
+router.route('/:projectId/:activeProfile')
   .get(
-    validateParams(paramSchemaList),
+    validateParams(paramSchemaGetList),
     validateQuery(taskListQuery),
     getTasks
   )
