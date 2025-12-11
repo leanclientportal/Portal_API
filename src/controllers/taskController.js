@@ -2,11 +2,11 @@ const Task = require('../models/Task');
 const asyncHandler = require('../middlewares/asyncHandler');
 
 // @desc    Get all tasks for a project
-// @route   GET /api/v1/tasks/:projectId
+// @route   GET /api/v1/tasks/:projectId/:activeProfileId
 // @access  Private
 const getTasks = asyncHandler(async (req, res) => {
-  const { projectId } = req.params;
-  const { page = 1, limit = 20, search, status, visibleToClient } = req.query;
+  const { projectId, activeProfileId } = req.params;
+  const { page = 1, limit = 20, search, status } = req.query;
 
   // Build query
   const query = { projectId, isActive: true };
@@ -21,10 +21,8 @@ const getTasks = asyncHandler(async (req, res) => {
   if (status) {
     query.status = status;
   }
-
-  if (typeof visibleToClient !== 'undefined') {
-    query.visibleToClient = visibleToClient === 'true';
-  }
+  if (activeProfileId === "client")
+    query.visibleToClient = true;
 
   // Execute query with pagination
   const tasks = await Task.find(query)

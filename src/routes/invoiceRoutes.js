@@ -5,7 +5,8 @@ const {
   getInvoices,
   createInvoice,
   updateInvoice,
-  deleteInvoice
+  deleteInvoice,
+  markAsPaid
 } = require('../controllers/invoiceController');
 
 // All routes are protected
@@ -18,5 +19,8 @@ router.route('/:projectId')
 router.route('/:projectId/:invoiceId')
   .put(updateInvoice)
   .delete(deleteInvoice);
+
+router.route('/:projectId/:invoiceId/pay')
+  .put(markAsPaid);
 
 module.exports = router;

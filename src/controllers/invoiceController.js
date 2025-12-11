@@ -40,7 +40,7 @@ const getInvoices = asyncHandler(async (req, res) => {
 // @access  Private
 const createInvoice = asyncHandler(async (req, res) => {
   const { projectId } = req.params;
-  const { invoiceUrl, title, status, amount, dueDate, paymentLink } = req.body;
+  const { invoiceUrl, title, status, amount, invoiceDate, dueDate, paidDate, paymentLink } = req.body;
 
   const project = await Project.findById(projectId);
   if (!project) {
@@ -53,7 +53,9 @@ const createInvoice = asyncHandler(async (req, res) => {
     title,
     status,
     amount,
+    invoiceDate,
     dueDate,
+    paidDate
     paymentLink
   });
 
@@ -69,14 +71,16 @@ const createInvoice = asyncHandler(async (req, res) => {
 // @access  Private
 const updateInvoice = asyncHandler(async (req, res) => {
   const { projectId, invoiceId } = req.params;
-  const { invoiceUrl, title, status, amount, dueDate, paymentLink } = req.body;
+  const { invoiceUrl, title, status, amount, invoiceDate, dueDate, paidDate, paymentLink } = req.body;
 
   const updateFields = {
     invoiceUrl,
     title,
     status,
     amount,
+    invoiceDate,
     dueDate,
+    paidDate,
     paymentLink
   };
 
@@ -117,7 +121,7 @@ const deleteInvoice = asyncHandler(async (req, res) => {
 
   const invoice = await Invoice.findOneAndUpdate(
     { _id: invoiceId, projectId },
-    { isActive: false },
+    { isDeleted: true },
     { new: true }
   );
 
@@ -135,9 +139,44 @@ const deleteInvoice = asyncHandler(async (req, res) => {
   });
 });
 
+// @desc    Mark invoice as paid
+// @route   PUT /api/v1/invoices/:projectId/:invoiceId/pay
+// @access  Private
+const markAsPaid = asyncHandler(async (req, res) => {
+  const { projectId, invoiceId } = req.params;
+
+  const invoice = await Invoice.findOne({ _id: invoiceId, projectId });
+
+  if (!invoice) {
+    return res.status(404).json({
+      success: false,
+      message: 'Invoice not found'
+    });
+  }
+
+  if (invoice.status === 'paid') {
+    return res.status(400).json({
+      success: false,
+      message: 'Invoice is already paid'
+    });
+  }
+
+  invoice.status = 'paid';
+  invoice.paidDate = new Date();
+  await invoice.save();
+
+  res.status(200).json({
+    success: true,
+    message: 'Invoice marked as paid successfully',
+    data: invoice
+  });
+});
+
+
 module.exports = {
   getInvoices,
   createInvoice,
   updateInvoice,
-  deleteInvoice
+  deleteInvoice,
+  markAsPaid
 };

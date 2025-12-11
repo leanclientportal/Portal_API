@@ -114,20 +114,20 @@ const validationSchemas = {
   // Invoice validation
   invoice: {
     create: Joi.object({
-      invoiceUrl: Joi.string().uri(),
-      title: Joi.string().optional(),
-      status: Joi.string().valid('pending', 'paid', 'overdue'),
-      amount: Joi.number().optional(),
-      dueDate: Joi.date(),
-      paymentLink: Joi.string(),
+      invoiceUrl: Joi.string().uri().optional(),
+      title: Joi.string().required().min(2).max(200),
+      status: Joi.string().valid('pending', 'paid'),
+      amount: Joi.number().required(),
+      dueDate: Joi.date().required(),
+      paymentLink: Joi.string().optional(),
     }),
     update: Joi.object({
-      invoiceUrl: Joi.string().uri(),
-      title: Joi.string().optional(),
-      status: Joi.string().valid('pending', 'paid', 'overdue'),
-      amount: Joi.number().min(0),
-      dueDate: Joi.date(),
-      paymentLink: Joi.string(),
+      invoiceUrl: Joi.string().uri().optional(),
+      title: Joi.string().required().min(2).max(200),
+      status: Joi.string().valid('pending', 'paid'),
+      amount: Joi.number().required(),
+      dueDate: Joi.date().required(),
+      paymentLink: Joi.string().optional(),
     })
   },
 

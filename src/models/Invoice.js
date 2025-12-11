@@ -18,20 +18,32 @@ const invoiceSchema = new mongoose.Schema({
   },
   status: {
     type: String,
-    enum: ['pending', 'paid', 'overdue'],
+    enum: ['pending', 'paid'],
     default: 'pending'
   },
   amount: {
     type: Number,
     required: true
   },
+  invoiceDate: {
+    type: Date,
+    required: true,
+  },
   dueDate: {
+    type: Date,
+    required: false
+  },
+  paidDate: {
     type: Date,
     required: false
   },
   paymentLink: {
     type: String,
     required: false
+  },
+  isDeleted: {
+    type: Boolean,
+    default: false,
   },
 }, {
   timestamps: true,

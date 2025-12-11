@@ -33,12 +33,13 @@ const taskListQuery = validationSchemas.pagination.keys({
   visibleToClient: Joi.boolean()
 });
 
-router.route('/:projectId')
+router.route('/:projectId/:activeProfileId')
   .get(
     validateParams(paramSchemaList),
     validateQuery(taskListQuery),
     getTasks
   )
+router.route('/:projectId')
   .post(
     validateParams(paramSchemaList),
     validate(validationSchemas.task.create),
