@@ -37,7 +37,7 @@ const getClients = asyncHandler(async (req, res) => {
 
   const clientsWithProjects = await Promise.all(
     clients.map(async (client) => {
-      const totalProjects = await Project.countDocuments({ clientId: client._id, isActive: true });
+      const totalProjects = await Project.countDocuments({ clientId: client._id, isDeleted: false });
       return { ...client.toObject(), totalProjects };
     })
   );
