@@ -95,8 +95,7 @@ const updateInvoice = asyncHandler(async (req, res) => {
       runValidators: true
     }
   ).populate([
-    { path: 'projectId', select: 'name' },
-    { path: 'clientId', select: 'name email' }
+    { path: 'projectId', select: 'name' }
   ]);
 
   if (!invoice) {
