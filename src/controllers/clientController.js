@@ -42,7 +42,9 @@ const getClients = asyncHandler(async (req, res) => {
       return { ...client.toObject(), totalProjects };
     })
   );
-
+  var clientsData = {
+    clients: clientsWithProjects
+  };
   const pagination = {
     current: parseInt(page),
     total: Math.ceil(total / limit),
@@ -50,7 +52,7 @@ const getClients = asyncHandler(async (req, res) => {
     totalRecords: total
   };
 
-  sendResponse(res, 200, 'Clients retrieved successfully', clientsWithProjects, pagination);
+  sendResponse(res, 200, 'Clients retrieved successfully', clientsData, pagination);
 });
 
 // @desc    Get client list for dropdown
@@ -212,7 +214,7 @@ const resendInvitation = asyncHandler(async (req, res) => {
   if (!client) {
     return sendResponse(res, 404, 'Client not found', null, false);
   }
-  
+
   if (client.invitationToken === null) {
     return sendResponse(res, 400, 'Client has already been activated and cannot be invited again.', null, false);
   }
