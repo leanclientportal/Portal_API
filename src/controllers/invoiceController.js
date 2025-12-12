@@ -9,7 +9,7 @@ const getInvoices = asyncHandler(async (req, res) => {
   const { projectId } = req.params;
   const { page = 1, limit = 20, status } = req.query;
 
-  const query = { projectId };
+  const query = { projectId, isDeleted: false };
 
   if (status) {
     query.status = status;
@@ -25,13 +25,16 @@ const getInvoices = asyncHandler(async (req, res) => {
 
   res.status(200).json({
     success: true,
-    count: invoices.length,
-    pagination: {
-      total,
-      page: parseInt(page),
-      limit: parseInt(limit)
-    },
-    data: invoices
+    message: 'Invoices retrieved successfully',
+    data: {
+      invoice: invoices,
+      pagination: {
+        current: parseInt(page),
+        total: Math.ceil(total / limit),
+        count: invoices.length,
+        totalRecords: total
+      }
+    }
   });
 });
 

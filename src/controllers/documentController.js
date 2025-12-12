@@ -24,9 +24,16 @@ const getDocuments = asyncHandler(async (req, res) => {
 
   res.status(200).json({
     success: true,
-    count: documents.length,
-    pagination: { total, page: parseInt(page), limit: parseInt(limit) },
-    data: documents
+    message: 'Documents retrieved successfully',
+    data: {
+      documents,
+      pagination: {
+        current: parseInt(page),
+        total: Math.ceil(total / limit),
+        count: documents.length,
+        totalRecords: total
+      }
+    }
   });
 });
 
