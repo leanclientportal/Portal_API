@@ -42,7 +42,7 @@ const getTasks = asyncHandler(async (req, res) => {
     totalRecords: total
   };
 
-  sendResponse(res, 200, 'Tasks retrieved successfully', tasks, pagination);
+  sendResponse(res, 200, 'Tasks retrieved successfully', { tasks }, pagination);
 });
 
 // @desc    Create new task

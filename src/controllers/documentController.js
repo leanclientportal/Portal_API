@@ -30,7 +30,7 @@ const getDocuments = asyncHandler(async (req, res) => {
     totalRecords: total
   };
 
-  sendResponse(res, 200, 'Documents retrieved successfully', documents, pagination);
+  sendResponse(res, 200, 'Documents retrieved successfully', { documents }, pagination);
 });
 
 // @desc    Get a single document

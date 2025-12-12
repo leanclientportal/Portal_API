@@ -31,7 +31,7 @@ const getInvoices = asyncHandler(async (req, res) => {
     totalRecords: total
   };
 
-  sendResponse(res, 200, 'Invoices retrieved successfully', invoices, pagination);
+  sendResponse(res, 200, 'Invoices retrieved successfully', { invoices }, pagination);
 });
 
 // @desc    Create new invoice

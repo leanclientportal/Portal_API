@@ -69,7 +69,7 @@ const getProjects = asyncHandler(async (req, res) => {
     totalRecords: total
   };
 
-  sendResponse(res, 200, 'Projects retrieved successfully', projects, pagination);
+  sendResponse(res, 200, 'Projects retrieved successfully', { projects }, pagination);
 });
 
 // @desc    Create new project

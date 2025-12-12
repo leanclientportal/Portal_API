@@ -38,7 +38,7 @@ const getPlans = asyncHandler(async (req, res) => {
     totalRecords: total
   };
 
-  sendResponse(res, 200, 'Plans retrieved successfully', plans, pagination);
+  sendResponse(res, 200, 'Plans retrieved successfully', { plans }, pagination);
 });
 
 // @desc    Get a single plan by ID
