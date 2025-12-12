@@ -1,6 +1,7 @@
 const Project = require('../models/Project');
 const asyncHandler = require('../middlewares/asyncHandler');
 const TenantClientMapping = require('../models/TenantClientMapping');
+const sendResponse = require('../utils/apiResponse');
 
 // @desc    Get all projects
 // @route   POST /api/v1/projects/:activeProfile/:activeProfileId
@@ -13,7 +14,7 @@ const getProjects = asyncHandler(async (req, res) => {
   const query = { isDeleted: false };
 
   if (!activeProfile || !activeProfileId) {
-    return res.status(400).json({ success: false, message: 'Active profile and ID are required' });
+    return sendResponse(res, 400, 'Active profile and ID are required', null, false);
   }
 
   if (activeProfile === 'tenant') {
@@ -31,7 +32,7 @@ const getProjects = asyncHandler(async (req, res) => {
     const tenantIds = tenantMappings.map(mapping => mapping.tenantId);
     query.tenantId = { $in: tenantIds };
   } else {
-    return res.status(400).json({ success: false, message: 'Invalid active profile' });
+    return sendResponse(res, 400, 'Invalid active profile', null, false);
   }
 
   if (searchTerm) {
@@ -61,19 +62,14 @@ const getProjects = asyncHandler(async (req, res) => {
 
   const total = await Project.countDocuments(query);
 
-  res.status(200).json({
-    success: true,
-    message: 'Projects retrieved successfully',
-    data: {
-      projects,
-      pagination: {
-        current: parseInt(page),
-        total: Math.ceil(total / limit),
-        count: projects.length,
-        totalRecords: total
-      }
-    }
-  });
+  const pagination = {
+    current: parseInt(page),
+    total: Math.ceil(total / limit),
+    count: projects.length,
+    totalRecords: total
+  };
+
+  sendResponse(res, 200, 'Projects retrieved successfully', projects, pagination);
 });
 
 // @desc    Create new project
@@ -94,11 +90,7 @@ const createProject = asyncHandler(async (req, res) => {
 
   await project.save();
 
-  res.status(201).json({
-    success: true,
-    message: 'Project created successfully',
-    data: project
-  });
+  sendResponse(res, 201, 'Project created successfully', project);
 });
 
 // @desc    Get project details
@@ -112,17 +104,10 @@ const getProject = asyncHandler(async (req, res) => {
   }).populate('clientId', 'name email company').populate('tenantId', 'name email company');
 
   if (!project) {
-    return res.status(404).json({
-      success: false,
-      message: 'Project not found'
-    });
+    return sendResponse(res, 404, 'Project not found', null, false);
   }
 
-  res.status(200).json({
-    success: true,
-    message: 'Project details retrieved successfully',
-    data: project
-  });
+  sendResponse(res, 200, 'Project details retrieved successfully', project);
 });
 
 // @desc    Update project
@@ -146,17 +131,10 @@ const updateProject = asyncHandler(async (req, res) => {
   ).populate('clientId', 'name email company').populate('tenantId', 'name email company');
 
   if (!project) {
-    return res.status(404).json({
-      success: false,
-      message: 'Project not found'
-    });
+    return sendResponse(res, 404, 'Project not found', null, false);
   }
 
-  res.status(200).json({
-    success: true,
-    message: 'Project updated successfully',
-    data: project
-  });
+  sendResponse(res, 200, 'Project updated successfully', project);
 });
 
 // @desc    Delete project (soft delete)
@@ -172,16 +150,10 @@ const deleteProject = asyncHandler(async (req, res) => {
   );
 
   if (!project) {
-    return res.status(404).json({
-      success: false,
-      message: 'Project not found'
-    });
+    return sendResponse(res, 404, 'Project not found', null, false);
   }
 
-  res.status(200).json({
-    success: true,
-    message: 'Project deleted successfully'
-  });
+  sendResponse(res, 200, 'Project deleted successfully', {});
 });
 
 module.exports = {

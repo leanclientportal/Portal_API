@@ -1,6 +1,7 @@
 const Invoice = require('../models/Invoice');
 const Project = require('../models/Project');
 const asyncHandler = require('../middlewares/asyncHandler');
+const sendResponse = require('../utils/apiResponse');
 
 // @desc    Get all invoices for a project
 // @route   GET /api/v1/invoices/:projectId
@@ -23,19 +24,14 @@ const getInvoices = asyncHandler(async (req, res) => {
 
   const total = await Invoice.countDocuments(query);
 
-  res.status(200).json({
-    success: true,
-    message: 'Invoices retrieved successfully',
-    data: {
-      invoice: invoices,
-      pagination: {
-        current: parseInt(page),
-        total: Math.ceil(total / limit),
-        count: invoices.length,
-        totalRecords: total
-      }
-    }
-  });
+  const pagination = {
+    current: parseInt(page),
+    total: Math.ceil(total / limit),
+    count: invoices.length,
+    totalRecords: total
+  };
+
+  sendResponse(res, 200, 'Invoices retrieved successfully', invoices, pagination);
 });
 
 // @desc    Create new invoice
@@ -47,7 +43,7 @@ const createInvoice = asyncHandler(async (req, res) => {
 
   const project = await Project.findById(projectId);
   if (!project) {
-    return res.status(404).json({ success: false, message: 'Project not found' });
+    return sendResponse(res, 404, 'Project not found', null, false);
   }
 
   const invoice = await Invoice.create({
@@ -62,11 +58,7 @@ const createInvoice = asyncHandler(async (req, res) => {
     paymentLink
   });
 
-  res.status(201).json({
-    success: true,
-    message: 'Invoice created successfully',
-    data: invoice
-  });
+  sendResponse(res, 201, 'Invoice created successfully', invoice);
 });
 
 // @desc    Update invoice
@@ -102,17 +94,10 @@ const updateInvoice = asyncHandler(async (req, res) => {
   ]);
 
   if (!invoice) {
-    return res.status(404).json({
-      success: false,
-      message: 'Invoice not found'
-    });
+    return sendResponse(res, 404, 'Invoice not found', null, false);
   }
 
-  res.status(200).json({
-    success: true,
-    message: 'Invoice updated successfully',
-    data: invoice
-  });
+  sendResponse(res, 200, 'Invoice updated successfully', invoice);
 });
 
 // @desc    Delete invoice (soft delete)
@@ -128,17 +113,10 @@ const deleteInvoice = asyncHandler(async (req, res) => {
   );
 
   if (!invoice) {
-    return res.status(404).json({
-      success: false,
-      message: 'Invoice not found'
-    });
+    return sendResponse(res, 404, 'Invoice not found', null, false);
   }
 
-  res.status(200).json({
-    success: true,
-    message: 'Invoice deleted successfully',
-    data: {}
-  });
+  sendResponse(res, 200, 'Invoice deleted successfully', {});
 });
 
 // @desc    Mark invoice as paid
@@ -150,28 +128,18 @@ const markAsPaid = asyncHandler(async (req, res) => {
   const invoice = await Invoice.findOne({ _id: invoiceId, projectId });
 
   if (!invoice) {
-    return res.status(404).json({
-      success: false,
-      message: 'Invoice not found'
-    });
+    return sendResponse(res, 404, 'Invoice not found', null, false);
   }
 
   if (invoice.status === 'paid') {
-    return res.status(400).json({
-      success: false,
-      message: 'Invoice is already paid'
-    });
+    return sendResponse(res, 400, 'Invoice is already paid', null, false);
   }
 
   invoice.status = 'paid';
   invoice.paidDate = new Date();
   await invoice.save();
 
-  res.status(200).json({
-    success: true,
-    message: 'Invoice marked as paid successfully',
-    data: invoice
-  });
+  sendResponse(res, 200, 'Invoice marked as paid successfully', invoice);
 });
 
 

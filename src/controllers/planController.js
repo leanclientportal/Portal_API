@@ -1,5 +1,6 @@
 const Plan = require('../models/Plan');
 const asyncHandler = require('../middlewares/asyncHandler');
+const sendResponse = require('../utils/apiResponse');
 
 // @desc    Get all plans
 // @route   GET /api/v1/plans
@@ -30,19 +31,14 @@ const getPlans = asyncHandler(async (req, res) => {
 
   const total = await Plan.countDocuments(query);
 
-  res.status(200).json({
-    success: true,
-    message: 'Plans retrieved successfully',
-    data: {
-      plans,
-      pagination: {
-        current: parseInt(page),
-        total: Math.ceil(total / limit),
-        count: plans.length,
-        totalRecords: total
-      }
-    }
-  });
+  const pagination = {
+    current: parseInt(page),
+    total: Math.ceil(total / limit),
+    count: plans.length,
+    totalRecords: total
+  };
+
+  sendResponse(res, 200, 'Plans retrieved successfully', plans, pagination);
 });
 
 // @desc    Get a single plan by ID
@@ -54,17 +50,10 @@ const getPlanById = asyncHandler(async (req, res) => {
   const plan = await Plan.findById(planId);
 
   if (!plan) {
-    return res.status(404).json({
-      success: false,
-      message: 'Plan not found'
-    });
+    return sendResponse(res, 404, 'Plan not found', null, false);
   }
 
-  res.status(200).json({
-    success: true,
-    message: 'Plan retrieved successfully',
-    data: plan
-  });
+  sendResponse(res, 200, 'Plan retrieved successfully', plan);
 });
 
 // @desc    Create new plan
@@ -73,11 +62,7 @@ const getPlanById = asyncHandler(async (req, res) => {
 const createPlan = asyncHandler(async (req, res) => {
   const plan = await Plan.create(req.body);
 
-  res.status(201).json({
-    success: true,
-    message: 'Plan created successfully',
-    data: plan
-  });
+  sendResponse(res, 201, 'Plan created successfully', plan);
 });
 
 // @desc    Update plan
@@ -96,17 +81,10 @@ const updatePlan = asyncHandler(async (req, res) => {
   );
 
   if (!plan) {
-    return res.status(404).json({
-      success: false,
-      message: 'Plan not found'
-    });
+    return sendResponse(res, 404, 'Plan not found', null, false);
   }
 
-  res.status(200).json({
-    success: true,
-    message: 'Plan updated successfully',
-    data: plan
-  });
+  sendResponse(res, 200, 'Plan updated successfully', plan);
 });
 
 // @desc    Delete plan (soft delete)
@@ -122,16 +100,10 @@ const deletePlan = asyncHandler(async (req, res) => {
   );
 
   if (!plan) {
-    return res.status(404).json({
-      success: false,
-      message: 'Plan not found'
-    });
+    return sendResponse(res, 404, 'Plan not found', null, false);
   }
 
-  res.status(200).json({
-    success: true,
-    message: 'Plan deleted successfully'
-  });
+  sendResponse(res, 200, 'Plan deleted successfully', {});
 });
 
 module.exports = {
@@ -141,4 +113,3 @@ module.exports = {
   updatePlan,
   deletePlan
 };
-

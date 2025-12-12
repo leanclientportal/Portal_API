@@ -1,5 +1,6 @@
 const Task = require('../models/Task');
 const asyncHandler = require('../middlewares/asyncHandler');
+const sendResponse = require('../utils/apiResponse');
 
 // @desc    Get all tasks for a project
 // @route   GET /api/v1/tasks/:projectId/:activeProfileId
@@ -34,19 +35,14 @@ const getTasks = asyncHandler(async (req, res) => {
 
   const total = await Task.countDocuments(query);
 
-  res.status(200).json({
-    success: true,
-    message: 'Tasks retrieved successfully',
-    data: {
-      tasks,
-      pagination: {
-        current: parseInt(page),
-        total: Math.ceil(total / limit),
-        count: tasks.length,
-        totalRecords: total
-      }
-    }
-  });
+  const pagination = {
+    current: parseInt(page),
+    total: Math.ceil(total / limit),
+    count: tasks.length,
+    totalRecords: total
+  };
+
+  sendResponse(res, 200, 'Tasks retrieved successfully', tasks, pagination);
 });
 
 // @desc    Create new task
@@ -64,11 +60,7 @@ const createTask = asyncHandler(async (req, res) => {
     { path: 'projectId', select: 'name' }
   ]);
 
-  res.status(201).json({
-    success: true,
-    message: 'Task created successfully',
-    data: task
-  });
+  sendResponse(res, 201, 'Task created successfully', task);
 });
 
 // @desc    Update task
@@ -89,17 +81,10 @@ const updateTask = asyncHandler(async (req, res) => {
   ]);
 
   if (!task) {
-    return res.status(404).json({
-      success: false,
-      message: 'Task not found'
-    });
+    return sendResponse(res, 404, 'Task not found', null, false);
   }
 
-  res.status(200).json({
-    success: true,
-    message: 'Task updated successfully',
-    data: task
-  });
+  sendResponse(res, 200, 'Task updated successfully', task);
 });
 
 // @desc    Delete task (soft delete)
@@ -115,16 +100,10 @@ const deleteTask = asyncHandler(async (req, res) => {
   );
 
   if (!task) {
-    return res.status(404).json({
-      success: false,
-      message: 'Task not found'
-    });
+    return sendResponse(res, 404, 'Task not found', null, false);
   }
 
-  res.status(200).json({
-    success: true,
-    message: 'Task deleted successfully'
-  });
+  sendResponse(res, 200, 'Task deleted successfully', {});
 });
 
 module.exports = {

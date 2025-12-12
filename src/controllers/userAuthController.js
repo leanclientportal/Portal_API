@@ -11,20 +11,21 @@ const asyncHandler = require('../middlewares/asyncHandler');
 const config = require('../config');
 const { generateNumericOTP } = require('../utils/otpGenerator');
 const { sendEmail } = require('../services/emailService');
+const sendResponse = require('../utils/apiResponse');
 
 const sendOtp = asyncHandler(async (req, res) => {
   const { email, type } = req.body;
 
   if (!email || !type) {
-    return res.status(400).json({ message: 'Email and type are required' });
+    return sendResponse(res, 400, 'Email and type are required', null, false);
   }
 
   const user = await User.findOne({ email });
 
   if (type === 'registration' && user) {
-    return res.status(400).json({ message: 'User already registered. Please login.' });
+    return sendResponse(res, 400, 'User already registered. Please login.', null, false);
   } else if (type === 'login' && !user) {
-    return res.status(404).json({ message: 'User not found. Please register.' });
+    return sendResponse(res, 404, 'User not found. Please register.', null, false);
   }
 
   const otp = generateNumericOTP(6);
@@ -49,17 +50,13 @@ const sendOtp = asyncHandler(async (req, res) => {
       let client = Client.findById(user.activeProfileId);
       if (client) {
         if (client.invitationToken)
-          return res.status(404).json({
-            message: 'Invitation not accepted. Please check your email and accept the invitation to continue.'
-          });
+          return sendResponse(res, 404, 'Invitation not accepted. Please check your email and accept the invitation to continue.', null, false);
 
         if (client.isActive === false)
-          return res.status(404).json({
-            message: 'Account not activated. Please verify your email to activate your account.'
-          });
+          return sendResponse(res, 404, 'Account not activated. Please verify your email to activate your account.', null, false);
       }
       else
-        return res.status(404).json({ message: 'User not found. Please register.' });
+        return sendResponse(res, 404, 'User not found. Please register.', null, false);
     }
 
 
@@ -91,23 +88,23 @@ const sendOtp = asyncHandler(async (req, res) => {
 
   } catch (error) {
     console.error('Error sending OTP email:', error);
-    return res.status(500).json({ message: 'Failed to send OTP email.' });
+    return sendResponse(res, 500, 'Failed to send OTP email.', null, false);
   }
 
-  res.status(200).json({ message: 'OTP sent to your email. Please verify to continue.' });
+  sendResponse(res, 200, 'OTP sent to your email. Please verify to continue.');
 });
 
 const verifyOtp = asyncHandler(async (req, res) => {
   const { email, otp, name, phone, type, activeProfile = 'client' } = req.body;
 
   if (!email || !otp || !type) {
-    return res.status(400).json({ message: 'Email, OTP, and type are required' });
+    return sendResponse(res, 400, 'Email, OTP, and type are required', null, false);
   }
 
   const otpData = await Otp.findOne({ identifier: email, otp, expiresAt: { $gt: new Date() } });
 
   if (!otpData) {
-    return res.status(400).json({ message: 'Invalid or expired OTP' });
+    return sendResponse(res, 400, 'Invalid or expired OTP', null, false);
   }
 
   let user = await User.findOne({ email });
@@ -150,7 +147,7 @@ const verifyOtp = asyncHandler(async (req, res) => {
     await newMapping.save();
 
   } else if (type === 'login' && !user) {
-    return res.status(404).json({ message: 'User not found. Please register.' });
+    return sendResponse(res, 404, 'User not found. Please register.', null, false);
   } else if (user) {
     activeProfileId = user.activeProfileId;
     if (user.activeProfile === 'tenant') {
@@ -171,9 +168,7 @@ const verifyOtp = asyncHandler(async (req, res) => {
   if (user) {
     const token = jwt.sign({ id: user._id }, config.JWT_SECRET, { expiresIn: config.JWT_EXPIRES_IN });
 
-    res.status(200).json({
-      success: true,
-      message: 'OTP verified and user processed successfully.',
+    sendResponse(res, 200, 'OTP verified and user processed successfully.', {
       token,
       userId: user._id,
       activeProfile: user.activeProfile,
@@ -182,7 +177,7 @@ const verifyOtp = asyncHandler(async (req, res) => {
       profileName
     });
   } else {
-    return res.status(400).json({ message: "Could not process user." });
+    return sendResponse(res, 400, 'Could not process user.', null, false);
   }
 });
 
@@ -191,13 +186,13 @@ const createProfile = asyncHandler(async (req, res) => {
   const { userId } = req.params;
 
   if (!name || !email || !profileType) {
-    return res.status(400).json({ message: 'Name, email, and profileType are required' });
+    return sendResponse(res, 400, 'Name, email, and profileType are required', null, false);
   }
 
   const user = await User.findById(userId);
 
   if (!user) {
-    return res.status(404).json({ message: 'User not found' });
+    return sendResponse(res, 404, 'User not found', null, false);
   }
 
   let profile;
@@ -206,7 +201,7 @@ const createProfile = asyncHandler(async (req, res) => {
   } else if (profileType === 'client') {
     profile = new Client({ name, email, phone, profileImageUrl });
   } else {
-    return res.status(400).json({ message: "Invalid profileType. Must be 'tenant' or 'client'." });
+    return sendResponse(res, 400, "Invalid profileType. Must be 'tenant' or 'client'.", null, false);
   }
 
   await profile.save();
@@ -219,11 +214,7 @@ const createProfile = asyncHandler(async (req, res) => {
 
   await newMapping.save();
 
-  res.status(201).json({
-    success: true,
-    message: 'User profile created successfully.',
-    data: profile
-  });
+  sendResponse(res, 201, 'User profile created successfully.', profile);
 });
 
 const updateProfile = asyncHandler(async (req, res) => {
@@ -233,7 +224,7 @@ const updateProfile = asyncHandler(async (req, res) => {
   const user = await User.findById(userId);
 
   if (!user) {
-    return res.status(404).json({ success: false, message: 'User not found' });
+    return sendResponse(res, 404, 'User not found', null, false);
   }
 
   const updateFields = {};
@@ -264,14 +255,10 @@ const updateProfile = asyncHandler(async (req, res) => {
   }
 
   if (!profile) {
-    return res.status(404).json({ success: false, message: 'Profile not found.' });
+    return sendResponse(res, 404, 'Profile not found.', null, false);
   }
 
-  res.status(200).json({
-    success: true,
-    message: 'Profile updated successfully.',
-    data: profile,
-  });
+  sendResponse(res, 200, 'Profile updated successfully.', profile);
 });
 
 const mergeProfiles = asyncHandler(async (req, res) => {
@@ -279,22 +266,22 @@ const mergeProfiles = asyncHandler(async (req, res) => {
   const { sourceProfileId, targetProfileId, profileType } = req.body;
 
   if (!sourceProfileId || !targetProfileId || !profileType) {
-    return res.status(400).json({ success: false, message: 'Source profile ID, target profile ID, and profile type are required.' });
+    return sendResponse(res, 400, 'Source profile ID, target profile ID, and profile type are required.', null, false);
   }
 
   if (sourceProfileId === targetProfileId) {
-    return res.status(400).json({ success: false, message: 'Source and target profile IDs cannot be the same.' });
+    return sendResponse(res, 400, 'Source and target profile IDs cannot be the same.', null, false);
   }
 
   const user = await User.findById(userId);
   if (!user) {
-    return res.status(404).json({ success: false, message: 'User not found.' });
+    return sendResponse(res, 404, 'User not found.', null, false);
   }
 
   const targetMapping = await UserTenantClientMapping.findOne({ userId, masterId: targetProfileId, role: profileType });
 
   if (!targetMapping) {
-    return res.status(404).json({ success: false, message: 'One or both profiles do not belong to the specified user or do not exist.' });
+    return sendResponse(res, 404, 'One or both profiles do not belong to the specified user or do not exist.', null, false);
   }
 
   if (profileType === 'tenant') {
@@ -309,14 +296,14 @@ const mergeProfiles = asyncHandler(async (req, res) => {
 
   await UserTenantClientMapping.findByIdAndDelete(targetMapping._id);
 
-  res.status(200).json({ success: true, message: `Successfully merged profile ${sourceProfileId} into profile ${targetProfileId}.` });
+  sendResponse(res, 200, `Successfully merged profile ${sourceProfileId} into profile ${targetProfileId}.`, {});
 });
 
 const verifyInvitation = asyncHandler(async (req, res) => {
   const { token } = req.query;
 
   if (!token) {
-    return res.status(400).json({ message: 'Invitation token is required' });
+    return sendResponse(res, 400, 'Invitation token is required', null, false);
   }
 
   const client = await Client.findOne({
@@ -324,29 +311,26 @@ const verifyInvitation = asyncHandler(async (req, res) => {
   });
 
   if (!client) {
-    return res.status(400).json({ message: 'Invalid or expired invitation token.' });
+    return sendResponse(res, 400, 'Invalid or expired invitation token.', null, false);
   }
 
   client.isActive = true;
   client.invitationToken = null;
   await client.save();
 
-  res.status(200).json({
-    success: true,
-    message: 'Invitation verified successfully. You can now log in.'
-  });
+  sendResponse(res, 200, 'Invitation verified successfully. You can now log in.', {});
 });
 
 const register = asyncHandler(async (req, res) => {
-  res.status(400).json({ message: 'Registration is now handled via the /verify-otp endpoint with type registration.' });
+  sendResponse(res, 400, 'Registration is now handled via the /verify-otp endpoint with type registration.', null, false);
 });
 
 const login = asyncHandler(async (req, res) => {
-  res.status(400).json({ message: 'Login is now handled via the /send-otp and /verify-otp endpoints with type login.' });
+  sendResponse(res, 400, 'Login is now handled via the /send-otp and /verify-otp endpoints with type login.', null, false);
 });
 
 const logout = asyncHandler(async (req, res) => {
-  res.status(200).json({ success: true, message: 'Logged out successfully' });
+  sendResponse(res, 200, 'Logged out successfully', {});
 });
 
 const switchAccount = asyncHandler(async (req, res) => {
@@ -354,7 +338,7 @@ const switchAccount = asyncHandler(async (req, res) => {
   const { userId } = req.params;
 
   if (!activeProfile || !masterId) {
-    return res.status(400).json({ message: 'activeProfile and masterId are required' });
+    return sendResponse(res, 400, 'activeProfile and masterId are required', null, false);
   }
 
   const mapping = await UserTenantClientMapping.findOne({
@@ -364,12 +348,12 @@ const switchAccount = asyncHandler(async (req, res) => {
   });
 
   if (!mapping) {
-    return res.status(404).json({ message: 'No account found for the provided details.' });
+    return sendResponse(res, 404, 'No account found for the provided details.', null, false);
   }
 
   const user = await User.findById(userId);
   if (!user) {
-    return res.status(404).json({ message: 'User not found.' });
+    return sendResponse(res, 404, 'User not found.', null, false);
   }
 
   user.activeProfile = activeProfile;
@@ -394,9 +378,7 @@ const switchAccount = asyncHandler(async (req, res) => {
 
   const token = jwt.sign({ id: user._id }, config.JWT_SECRET, { expiresIn: config.JWT_EXPIRES_IN });
 
-  res.status(200).json({
-    success: true,
-    message: 'Profile switch successfully.',
+  sendResponse(res, 200, 'Profile switch successfully.', {
     token,
     userId: user._id,
     activeProfile: user.activeProfile,
@@ -412,7 +394,7 @@ const getAccounts = asyncHandler(async (req, res) => {
   const mappings = await UserTenantClientMapping.find({ userId });
 
   if (!mappings || mappings.length === 0) {
-    return res.status(404).json({ message: 'No accounts found for this user.' });
+    return sendResponse(res, 404, 'No accounts found for this user.', null, false);
   }
 
   const accounts = await Promise.all(mappings.map(async (mapping) => {
@@ -447,7 +429,7 @@ const getAccounts = asyncHandler(async (req, res) => {
 
   const validAccounts = accounts.filter(account => account !== null);
 
-  res.status(200).json({ accounts: validAccounts });
+  sendResponse(res, 200, 'Accounts retrieved successfully', { accounts: validAccounts });
 });
 
 module.exports = {

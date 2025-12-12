@@ -8,6 +8,7 @@ const asyncHandler = require('../middlewares/asyncHandler');
 const { sendInvitationEmail } = require('../utils/emailUtils');
 const config = require('../config');
 const { string } = require('joi');
+const sendResponse = require('../utils/apiResponse');
 
 // @desc    Get all clients for a tenant
 // @route   GET /api/v1/clients/:tenantId
@@ -42,14 +43,14 @@ const getClients = asyncHandler(async (req, res) => {
     })
   );
 
-  res.status(200).json({
-    success: true,
-    message: 'Clients retrieved successfully',
-    data: {
-      clients: clientsWithProjects,
-      pagination: { current: parseInt(page), total: Math.ceil(total / limit), count: clients.length, totalRecords: total },
-    },
-  });
+  const pagination = {
+    current: parseInt(page),
+    total: Math.ceil(total / limit),
+    count: clients.length,
+    totalRecords: total
+  };
+
+  sendResponse(res, 200, 'Clients retrieved successfully', clientsWithProjects, pagination);
 });
 
 // @desc    Get client list for dropdown
@@ -70,11 +71,7 @@ const getClientListForDropdown = asyncHandler(async (req, res) => {
     label: client.name,
   }));
 
-  res.status(200).json({
-    success: true,
-    message: 'Client list for dropdown retrieved successfully',
-    data: formattedClients,
-  });
+  sendResponse(res, 200, 'Client list for dropdown retrieved successfully', formattedClients);
 });
 
 // @desc    Get a single client by client id
@@ -85,18 +82,16 @@ const getClientById = asyncHandler(async (req, res) => {
 
   const mapping = await TenantClientMapping.findOne({ tenantId, clientId });
   if (!mapping) {
-    res.status(404);
-    throw new Error('Client not found for this tenant');
+    return sendResponse(res, 404, 'Client not found for this tenant', null, false);
   }
 
   const client = await Client.findOne({ _id: clientId, isActive: true });
 
   if (!client) {
-    res.status(404);
-    throw new Error('Client not found');
+    return sendResponse(res, 404, 'Client not found', null, false);
   }
 
-  res.status(200).json({ success: true, message: 'Client retrieved successfully', data: client });
+  sendResponse(res, 200, 'Client retrieved successfully', client);
 });
 
 // @desc    Create new client and mapping
@@ -107,8 +102,7 @@ const createClient = asyncHandler(async (req, res) => {
   const { name, email, phone, profileImageUrl } = req.body;
 
   if (!name || !email) {
-    res.status(400);
-    throw new Error('Please provide name and email');
+    return sendResponse(res, 400, 'Please provide name and email', null, false);
   }
 
   const invitationToken = crypto.randomBytes(32).toString('hex');
@@ -117,8 +111,7 @@ const createClient = asyncHandler(async (req, res) => {
   if (client) {
     const existingMapping = await TenantClientMapping.findOne({ tenantId, clientId: client._id });
     if (existingMapping) {
-      res.status(400);
-      throw new Error('A client with this email already exists and is mapped to this tenant');
+      return sendResponse(res, 400, 'A client with this email already exists and is mapped to this tenant', null, false);
     }
     else {
       client = await Client.create({ name, email, phone, profileImageUrl, isActive: true, lastActivityDate: new Date(), invitationToken });
@@ -160,7 +153,7 @@ const createClient = asyncHandler(async (req, res) => {
     });
   }
 
-  res.status(201).json({ success: true, message: 'Client created and invitation sent successfully.', data: client });
+  sendResponse(res, 201, 'Client created and invitation sent successfully.', client);
 });
 
 // @desc    Update client
@@ -171,8 +164,7 @@ const updateClient = asyncHandler(async (req, res) => {
 
   const mapping = await TenantClientMapping.findOne({ tenantId, clientId });
   if (!mapping) {
-    res.status(404);
-    throw new Error('Client not found for this tenant');
+    return sendResponse(res, 404, 'Client not found for this tenant', null, false);
   }
 
   const updateData = {
@@ -183,11 +175,10 @@ const updateClient = asyncHandler(async (req, res) => {
   const client = await Client.findOneAndUpdate({ _id: clientId }, updateData, { new: true, runValidators: true });
 
   if (!client) {
-    res.status(404);
-    throw new Error('Client not found');
+    return sendResponse(res, 404, 'Client not found', null, false);
   }
 
-  res.status(200).json({ success: true, message: 'Client updated successfully', data: client });
+  sendResponse(res, 200, 'Client updated successfully', client);
 });
 
 // @desc    Delete client (soft delete)
@@ -198,18 +189,16 @@ const deleteClient = asyncHandler(async (req, res) => {
 
   const mapping = await TenantClientMapping.findOne({ tenantId, clientId });
   if (!mapping) {
-    res.status(404);
-    throw new Error('Client not found for this tenant');
+    return sendResponse(res, 404, 'Client not found for this tenant', null, false);
   }
 
   const client = await Client.findOneAndUpdate({ _id: clientId }, { isActive: false }, { new: true });
 
   if (!client) {
-    res.status(404);
-    throw new Error('Client not found');
+    return sendResponse(res, 404, 'Client not found', null, false);
   }
 
-  res.status(200).json({ success: true, message: 'Client deleted successfully' });
+  sendResponse(res, 200, 'Client deleted successfully', {});
 });
 
 // @desc    Resend invitation to a client
@@ -221,13 +210,11 @@ const resendInvitation = asyncHandler(async (req, res) => {
   const client = await Client.findById(clientId);
 
   if (!client) {
-    res.status(404);
-    throw new Error('Client not found');
+    return sendResponse(res, 404, 'Client not found', null, false);
   }
-  console.log(client);
+  
   if (client.invitationToken === null) {
-    res.status(400);
-    throw new Error('Client has already been activated and cannot be invited again.');
+    return sendResponse(res, 400, 'Client has already been activated and cannot be invited again.', null, false);
   }
 
   const invitationToken = crypto.randomBytes(32).toString('hex');
@@ -236,7 +223,7 @@ const resendInvitation = asyncHandler(async (req, res) => {
 
   await sendInvitationEmail(tenantId, client.name, client.email, invitationToken);
 
-  res.status(200).json({ success: true, message: 'Invitation resent successfully.' });
+  sendResponse(res, 200, 'Invitation resent successfully.', {});
 });
 
 module.exports = {

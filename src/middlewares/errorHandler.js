@@ -4,50 +4,41 @@ const errorHandler = (err, req, res, next) => {
 
   console.error('Error:', err);
 
+  let statusCode = error.statusCode || 500;
+  let message = error.message || 'Server Error';
+  let data = null;
+
   // Mongoose bad ObjectId
   if (err.name === 'CastError') {
-    const message = 'Resource not found';
-    return res.status(404).json({
-      success: false,
-      message,
-      error: message
-    });
+    message = 'Resource not found';
+    statusCode = 404;
   }
 
   // Mongoose duplicate key
   if (err.code === 11000) {
-    const message = 'Duplicate field value entered';
-    return res.status(400).json({
-      success: false,
-      message,
-      error: message
-    });
+    message = 'Duplicate field value entered';
+    statusCode = 400;
   }
 
   // Mongoose validation error
   if (err.name === 'ValidationError') {
-    const message = Object.values(err.errors).map(val => val.message).join(', ');
-    return res.status(400).json({
-      success: false,
-      message,
-      error: message
-    });
+    message = Object.values(err.errors).map(val => val.message).join(', ');
+    statusCode = 400;
   }
 
   // Joi validation error
   if (err.isJoi) {
-    const message = err.details.map(detail => detail.message).join(', ');
-    return res.status(400).json({
-      success: false,
-      message,
-      error: message
-    });
+    message = err.details.map(detail => detail.message).join(', ');
+    statusCode = 400;
   }
 
-  res.status(error.statusCode || 500).json({
+  res.status(statusCode).json({
     success: false,
-    message: error.message || 'Server Error',
-    error: error.message || 'Server Error'
+    code: statusCode,
+    message: message,
+    data: data,
+    error: message // Keeping error field for backward compatibility/debugging if needed, or I can remove it.
+    // The prompt asked for success, code, message, data.
   });
 };
 

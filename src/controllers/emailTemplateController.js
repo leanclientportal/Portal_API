@@ -1,5 +1,6 @@
 const EmailTemplate = require('../models/EmailTemplate');
 const asyncHandler = require('../middlewares/asyncHandler');
+const sendResponse = require('../utils/apiResponse');
 
 // @desc    Get all email templates for a tenant
 // @route   GET /api/v1/email-templates
@@ -8,11 +9,7 @@ const getEmailTemplates = asyncHandler(async (req, res) => {
   const tenantId = req.user.tenantId;
   const templates = await EmailTemplate.find({ tenantId, isActive: true });
 
-  res.status(200).json({
-    success: true,
-    count: templates.length,
-    data: templates,
-  });
+  sendResponse(res, 200, 'Email templates retrieved successfully', templates);
 });
 
 // @desc    Create a new email template
@@ -32,11 +29,7 @@ const createEmailTemplate = asyncHandler(async (req, res) => {
     type,
   });
 
-  res.status(201).json({
-    success: true,
-    message: 'Email template created successfully',
-    data: newTemplate,
-  });
+  sendResponse(res, 201, 'Email template created successfully', newTemplate);
 });
 
 // @desc    Update an email template
@@ -53,14 +46,10 @@ const updateEmailTemplate = asyncHandler(async (req, res) => {
   );
 
   if (!updatedTemplate) {
-    return res.status(404).json({ success: false, message: 'Email template not found' });
+    return sendResponse(res, 404, 'Email template not found', null, false);
   }
 
-  res.status(200).json({
-    success: true,
-    message: 'Email template updated successfully',
-    data: updatedTemplate,
-  });
+  sendResponse(res, 200, 'Email template updated successfully', updatedTemplate);
 });
 
 // @desc    Delete an email template (soft delete)
@@ -77,14 +66,10 @@ const deleteEmailTemplate = asyncHandler(async (req, res) => {
   );
 
   if (!template) {
-    return res.status(404).json({ success: false, message: 'Email template not found' });
+    return sendResponse(res, 404, 'Email template not found', null, false);
   }
 
-  res.status(200).json({
-    success: true,
-    message: 'Email template deleted successfully',
-    data: {},
-  });
+  sendResponse(res, 200, 'Email template deleted successfully', {});
 });
 
 module.exports = {

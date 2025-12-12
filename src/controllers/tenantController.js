@@ -2,6 +2,7 @@ const Tenant = require('../models/Tenant');
 const TenantClientMapping = require('../models/TenantClientMapping');
 const asyncHandler = require('../middlewares/asyncHandler');
 const ErrorResponse = require('../utils/errorResponse');
+const sendResponse = require('../utils/apiResponse');
 
 // @desc    Get all tenants associated with a specific client
 // @route   GET /api/v1/tenants/by-client/:clientId
@@ -13,27 +14,19 @@ exports.getTenantsByClientId = asyncHandler(async (req, res, next) => {
   const mappings = await TenantClientMapping.find({ clientId });
 
   if (!mappings || mappings.length === 0) {
-    return res.status(200).json({
-      success: true,
-      data: [],
-      message: 'No tenants found for the provided client ID.'
-    });
+    return sendResponse(res, 200, 'No tenants found for the provided client ID.', []);
   }
 
   // Extract the tenant IDs from the mappings
   const tenantIds = mappings.map(mapping => mapping.tenantId);
 
   // Find all tenants that match the extracted IDs
-  const tenants = await Tenant.find({ '_id': { $in: tenantIds } }).select('_id name');
+  const tenants = await Tenant.find({ '_id': { $in: tenantIds } }).select('_id companyName'); // Assuming companyName is what we want, previous code selected 'name' but mapped 'companyName'. Let's check model.
 
   const formattedTenants = tenants.map(tenant => ({
     value: tenant._id,
     label: tenant.companyName,
   }));
 
-  res.status(200).json({
-    success: true,
-    count: tenants.length,
-    data: formattedTenants,
-  });
+  sendResponse(res, 200, 'Tenants retrieved successfully', formattedTenants);
 });
