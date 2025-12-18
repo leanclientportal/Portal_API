@@ -8,7 +8,7 @@ const sendResponse = require('../utils/apiResponse');
 exports.getSmtpSettings = asyncHandler(async (req, res) => {
   const { tenantId } = req.params;
 
-  const tenant = await Tenant.findById(tenantId);
+  const tenant = await Tenant.findById(tenantId).select('smtpSetting');
 
   if (!tenant) {
     return sendResponse(res, 404, 'Tenant not found', null, false);
@@ -24,33 +24,40 @@ exports.updateSmtpSettings = asyncHandler(async (req, res) => {
   const { tenantId } = req.params;
   const { smtpSetting } = req.body;
 
-  const tenant = await Tenant.findByIdAndUpdate(
-    tenantId,
-    { smtpSetting },
-    { new: true, runValidators: true }
-  );
+  const tenant = await Tenant.findById(tenantId);
 
   if (!tenant) {
     return sendResponse(res, 404, 'Tenant not found', null, false);
   }
 
-  sendResponse(res, 200, 'SMTP settings updated successfully', tenant.smtpSetting);
+  const updateFields = {};
+  for (const key in smtpSetting) {
+    updateFields[`smtpSetting.${key}`] = smtpSetting[key];
+  }
+
+  const updatedTenant = await Tenant.findByIdAndUpdate(
+    tenantId,
+    { $set: updateFields },
+    { new: true, runValidators: true }
+  );
+
+  sendResponse(res, 200, 'SMTP settings updated successfully', updatedTenant.smtpSetting);
 });
 
 // @desc    Get email settings for a tenant
 // @route   GET /api/v1/tenant/:tenantId/settings/email
 // @access  Private
 exports.getEmailSettings = asyncHandler(async (req, res) => {
-    const { tenantId } = req.params;
-  
-    const tenant = await Tenant.findById(tenantId);
-  
-    if (!tenant) {
-      return sendResponse(res, 404, 'Tenant not found', null, false);
-    }
-  
-    sendResponse(res, 200, 'Email settings retrieved successfully', tenant.emailSetting);
-  });
+  const { tenantId } = req.params;
+
+  const tenant = await Tenant.findById(tenantId).select('emailSetting');
+
+  if (!tenant) {
+    return sendResponse(res, 404, 'Tenant not found', null, false);
+  }
+
+  sendResponse(res, 200, 'Email settings retrieved successfully', tenant.emailSetting);
+});
 
 // @desc    Update email settings for a tenant
 // @route   PUT /api/v1/tenant/:tenantId/settings/email
@@ -59,15 +66,22 @@ exports.updateEmailSettings = asyncHandler(async (req, res) => {
   const { tenantId } = req.params;
   const { emailSetting } = req.body;
 
-  const tenant = await Tenant.findByIdAndUpdate(
-    tenantId,
-    { emailSetting },
-    { new: true, runValidators: true }
-  );
+  const tenant = await Tenant.findById(tenantId);
 
   if (!tenant) {
     return sendResponse(res, 404, 'Tenant not found', null, false);
   }
 
-  sendResponse(res, 200, 'Email settings updated successfully', tenant.emailSetting);
+  const updateFields = {};
+  for (const key in emailSetting) {
+    updateFields[`emailSetting.${key}`] = emailSetting[key];
+  }
+
+  const updatedTenant = await Tenant.findByIdAndUpdate(
+    tenantId,
+    { $set: updateFields },
+    { new: true, runValidators: true }
+  );
+
+  sendResponse(res, 200, 'Email settings updated successfully', updatedTenant.emailSetting);
 });
