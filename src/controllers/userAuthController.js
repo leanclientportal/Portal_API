@@ -115,7 +115,7 @@ const verifyOtp = asyncHandler(async (req, res) => {
   if (type === 'registration' && !user) {
     let profileId;
     if (activeProfile === 'tenant') {
-      const newTenant = new Tenant({ companyName: name, email, phone, isActive: true });
+      const newTenant = new Tenant({ companyName: name, email, phone, isActive: true, smtpSetting: {}, emailSetting: {} });
       await newTenant.save();
       profileId = newTenant._id;
       activeProfileImage = newTenant.profileImageUrl;
@@ -197,7 +197,7 @@ const createProfile = asyncHandler(async (req, res) => {
 
   let profile;
   if (profileType === 'tenant') {
-    profile = new Tenant({ companyName: name, email, phone, profileImageUrl: profileImageUrl });
+    profile = new Tenant({ companyName: name, email, phone, profileImageUrl: profileImageUrl, smtpSetting: {}, emailSetting: {} });
   } else if (profileType === 'client') {
     profile = new Client({ name, email, phone, profileImageUrl });
   } else {

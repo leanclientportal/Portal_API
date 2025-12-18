@@ -33,6 +33,46 @@ const tenantSchema = new mongoose.Schema({
     type: mongoose.Schema.Types.ObjectId,
     ref: 'Plan'
   },
+  smtpSetting: {
+    user: {
+        type: String
+    },
+    pass: {
+        type: String
+    },
+    service: {
+        type: String
+    },
+    from: {
+        type: String
+    }
+  },
+  emailSetting: {
+    newProject: {
+        type: Boolean,
+        default: true
+    },
+    projectStatusChange: {
+        type: Boolean,
+        default: true
+    },
+    newTask: {
+        type: Boolean,
+        default: true
+    },
+    taskUpdate: {
+        type: Boolean,
+        default: true
+    },
+    documentUpload: {
+        type: Boolean,
+        default: true
+    },
+    invoiceUpload: {
+        type: Boolean,
+        default: true
+    }
+  }
 }, {
   timestamps: true,
   collection: 'tenant'

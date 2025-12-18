@@ -17,7 +17,7 @@ const getEmailTemplates = asyncHandler(async (req, res) => {
 // @access  Private
 const createEmailTemplate = asyncHandler(async (req, res) => {
   const tenantId = req.user.tenantId;
-  const { templateId, name, subject, body, variables, type } = req.body;
+  const { templateId, name, subject, body, isDefault } = req.body;
 
   const newTemplate = await EmailTemplate.create({
     tenantId,
@@ -25,8 +25,7 @@ const createEmailTemplate = asyncHandler(async (req, res) => {
     name,
     subject,
     body,
-    variables,
-    type,
+    isDefault: isDefault || false
   });
 
   sendResponse(res, 201, 'Email template created successfully', newTemplate);
@@ -38,6 +37,11 @@ const createEmailTemplate = asyncHandler(async (req, res) => {
 const updateEmailTemplate = asyncHandler(async (req, res) => {
   const { id } = req.params;
   const tenantId = req.user.tenantId;
+
+  // Prevent updating tenantId
+  if (req.body.tenantId) {
+    delete req.body.tenantId;
+  }
 
   const updatedTemplate = await EmailTemplate.findOneAndUpdate(
     { _id: id, tenantId },
