@@ -2,6 +2,9 @@ const Document = require('../models/Document');
 const Project = require('../models/Project');
 const asyncHandler = require('../middlewares/asyncHandler');
 const sendResponse = require('../utils/apiResponse');
+const { sendDocumentUploadEmail } = require('../utils/emailUtils');
+const Client = require('../models/Client');
+const Tenant = require('../models/Tenant');
 
 // @desc    Get all documents for a project
 // @route   GET /api/v1/documents/:projectId
@@ -54,7 +57,7 @@ const uploadDocument = asyncHandler(async (req, res) => {
   const { projectId } = req.params;
   const { name, docUrl, uploadedBy, uploaderId, isOverwrite } = req.body;
 
-  const project = await Project.findById(projectId);
+  const project = await Project.findById(projectId).populate('clientId');
   if (!project) {
     return sendResponse(res, 404, 'Project not found', null, false);
   }
@@ -82,6 +85,16 @@ const uploadDocument = asyncHandler(async (req, res) => {
     uploaderId,
     isOverwrite
   });
+
+  try {
+    const tenant = await Tenant.findById(project.tenantId);
+    if (project.clientId && tenant && tenant.emailSetting && tenant.emailSetting.documentUpload) {
+        await sendDocumentUploadEmail(project.tenantId, project.clientId.email, { name: document.name, projectName: project.name });
+    }
+  } catch (emailError) {
+      console.error(`Failed to send document upload email for document ${document._id}:`, emailError);
+  }
+
 
   sendResponse(res, 201, 'Document uploaded successfully', document);
 });

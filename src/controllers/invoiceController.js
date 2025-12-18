@@ -2,6 +2,9 @@ const Invoice = require('../models/Invoice');
 const Project = require('../models/Project');
 const asyncHandler = require('../middlewares/asyncHandler');
 const sendResponse = require('../utils/apiResponse');
+const { sendInvoiceUploadEmail, sendInvoicePaidEmail } = require('../utils/emailUtils');
+const Client = require('../models/Client');
+const Tenant = require('../models/Tenant');
 
 // @desc    Get all invoices for a project
 // @route   GET /api/v1/invoices/:projectId
@@ -41,7 +44,7 @@ const createInvoice = asyncHandler(async (req, res) => {
   const { projectId } = req.params;
   const { invoiceUrl, title, status, amount, invoiceDate, dueDate, paidDate, paymentLink } = req.body;
 
-  const project = await Project.findById(projectId);
+  const project = await Project.findById(projectId).populate('clientId');
   if (!project) {
     return sendResponse(res, 404, 'Project not found', null, false);
   }
@@ -57,6 +60,15 @@ const createInvoice = asyncHandler(async (req, res) => {
     paidDate,
     paymentLink
   });
+
+  try {
+    const tenant = await Tenant.findById(project.tenantId);
+    if (project.clientId && tenant && tenant.emailSetting && tenant.emailSetting.invoiceUpload) {
+        await sendInvoiceUploadEmail(project.tenantId, project.clientId.email, { number: invoice.title, amount: invoice.amount });
+    }
+  } catch (emailError) {
+      console.error(`Failed to send invoice upload email for invoice ${invoice._id}:`, emailError);
+  }
 
   sendResponse(res, 201, 'Invoice created successfully', invoice);
 });
@@ -125,7 +137,10 @@ const deleteInvoice = asyncHandler(async (req, res) => {
 const markAsPaid = asyncHandler(async (req, res) => {
   const { projectId, invoiceId } = req.params;
 
-  const invoice = await Invoice.findOne({ _id: invoiceId, projectId });
+  const invoice = await Invoice.findOne({ _id: invoiceId, projectId }).populate({ 
+      path: 'projectId',
+      populate: { path: 'clientId' }
+  });
 
   if (!invoice) {
     return sendResponse(res, 404, 'Invoice not found', null, false);
@@ -138,6 +153,15 @@ const markAsPaid = asyncHandler(async (req, res) => {
   invoice.status = 'paid';
   invoice.paidDate = new Date();
   await invoice.save();
+
+  try {
+    const tenant = await Tenant.findById(invoice.projectId.tenantId);
+    if (invoice.projectId.clientId && tenant && tenant.emailSetting && tenant.emailSetting.invoicePaid) {
+        await sendInvoicePaidEmail(invoice.projectId.tenantId, invoice.projectId.clientId.email, { number: invoice.title, amount: invoice.amount });
+    }
+  } catch (emailError) {
+      console.error(`Failed to send invoice paid email for invoice ${invoice._id}:`, emailError);
+  }
 
   sendResponse(res, 200, 'Invoice marked as paid successfully', invoice);
 });

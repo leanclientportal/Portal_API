@@ -10,7 +10,8 @@ const EmailTemplate = require('../models/EmailTemplate');
 const asyncHandler = require('../middlewares/asyncHandler');
 const config = require('../config');
 const { generateNumericOTP } = require('../utils/otpGenerator');
-const { sendEmail } = require('../services/emailService');
+// const { sendEmail } = require('../services/emailService'); // No longer needed directly
+const { sendLoginOtpEmail } = require('../utils/emailUtils');
 const sendResponse = require('../utils/apiResponse');
 
 const sendOtp = asyncHandler(async (req, res) => {
@@ -59,32 +60,8 @@ const sendOtp = asyncHandler(async (req, res) => {
         return sendResponse(res, 404, 'User not found. Please register.', null, false);
     }
 
-
-    let emailTemplate;
-    if (tenantId) {
-      emailTemplate = await EmailTemplate.findOne({ tenantId, templateId: config.Invitation_Email_Temaplate_Id, isActive: true });
-    }
-
-    if (!emailTemplate) {
-      emailTemplate = await EmailTemplate.findOne({ tenantId: null, templateId: config.Invitation_Email_Temaplate_Id, isActive: true });
-    }
-
-    let subject;
-    let html;
-    let text;
-
-    if (emailTemplate) {
-      subject = emailTemplate.subject;
-      html = emailTemplate.body.replace(/{{otp}}/g, otp);
-      text = html.replace(/<[^>]*>?/gm, '');
-    } else {
-      console.warn(`Warning: 'otp' email template not found. Using default email content.`);
-      subject = 'Your OTP for Lean Client Portal';
-      text = `Your OTP is: ${otp}`;
-      html = `<p>Your OTP is: <strong>${otp}</strong></p>`;
-    }
-
-    await sendEmail(email, subject, text, html);
+    // Use the utility function to send the OTP email
+    await sendLoginOtpEmail(tenantId, email, { otp });
 
   } catch (error) {
     console.error('Error sending OTP email:', error);

@@ -2,6 +2,9 @@ const Project = require('../models/Project');
 const asyncHandler = require('../middlewares/asyncHandler');
 const TenantClientMapping = require('../models/TenantClientMapping');
 const sendResponse = require('../utils/apiResponse');
+const { sendNewProjectEmail, sendProjectStatusChangeEmail } = require('../utils/emailUtils');
+const Client = require('../models/Client');
+const Tenant = require('../models/Tenant');
 
 // @desc    Get all projects
 // @route   POST /api/v1/projects/:activeProfile/:activeProfileId
@@ -90,6 +93,16 @@ const createProject = asyncHandler(async (req, res) => {
 
   await project.save();
 
+  try {
+    const client = await Client.findById(clientId);
+    const tenant = await Tenant.findById(tenantId);
+    if (client && tenant && tenant.emailSetting && tenant.emailSetting.newProject) {
+        await sendNewProjectEmail(tenantId, client.email, { name: project.name, clientName: client.name });
+    }
+  } catch (emailError) {
+      console.error(`Failed to send new project email for project ${project._id}:`, emailError);
+  }
+
   sendResponse(res, 201, 'Project created successfully', project);
 });
 
@@ -115,6 +128,12 @@ const getProject = asyncHandler(async (req, res) => {
 // @access  Private
 const updateProject = asyncHandler(async (req, res) => {
   const { projectId } = req.params;
+  
+  const projectBeforeUpdate = await Project.findById(projectId);
+  if (!projectBeforeUpdate) {
+    return sendResponse(res, 404, 'Project not found', null, false);
+  }
+  const oldStatus = projectBeforeUpdate.status;
 
   const updateData = {
     ...req.body,
@@ -132,6 +151,19 @@ const updateProject = asyncHandler(async (req, res) => {
 
   if (!project) {
     return sendResponse(res, 404, 'Project not found', null, false);
+  }
+
+  const newStatus = project.status;
+  if (oldStatus !== newStatus) {
+      try {
+        const client = await Client.findById(project.clientId);
+        const tenant = await Tenant.findById(project.tenantId);
+        if (client && tenant && tenant.emailSetting && tenant.emailSetting.projectStatusChange) {
+            await sendProjectStatusChangeEmail(project.tenantId, client.email, { name: project.name, status: newStatus });
+        }
+      } catch (emailError) {
+          console.error(`Failed to send project status change email for project ${project._id}:`, emailError);
+      }
   }
 
   sendResponse(res, 200, 'Project updated successfully', project);

@@ -1,6 +1,10 @@
 const Task = require('../models/Task');
 const asyncHandler = require('../middlewares/asyncHandler');
 const sendResponse = require('../utils/apiResponse');
+const { sendNewTaskEmail, sendTaskUpdateEmail } = require('../utils/emailUtils');
+const Project = require('../models/Project');
+const Client = require('../models/Client');
+const Tenant = require('../models/Tenant');
 
 // @desc    Get all tasks for a project
 // @route   GET /api/v1/tasks/:projectId/:activeProfileId
@@ -57,8 +61,18 @@ const createTask = asyncHandler(async (req, res) => {
   });
 
   await task.populate([
-    { path: 'projectId', select: 'name' }
+    { path: 'projectId', select: 'name tenantId clientId' }
   ]);
+
+  try {
+    const project = await Project.findById(projectId).populate('clientId');
+    const tenant = await Tenant.findById(project.tenantId);
+    if (project && project.clientId && tenant && tenant.emailSetting && tenant.emailSetting.newTask) {
+        await sendNewTaskEmail(project.tenantId, project.clientId.email, { name: task.title, projectName: project.name });
+    }
+  } catch (emailError) {
+      console.error(`Failed to send new task email for task ${task._id}:`, emailError);
+  }
 
   sendResponse(res, 201, 'Task created successfully', task);
 });
@@ -69,6 +83,12 @@ const createTask = asyncHandler(async (req, res) => {
 const updateTask = asyncHandler(async (req, res) => {
   const { projectId, taskId } = req.params;
 
+  const taskBeforeUpdate = await Task.findById(taskId);
+  if (!taskBeforeUpdate) {
+      return sendResponse(res, 404, 'Task not found', null, false);
+  }
+  const oldStatus = taskBeforeUpdate.status;
+
   const task = await Task.findOneAndUpdate(
     { _id: taskId, projectId },
     req.body,
@@ -77,11 +97,24 @@ const updateTask = asyncHandler(async (req, res) => {
       runValidators: true
     }
   ).populate([
-    { path: 'projectId', select: 'name' }
+    { path: 'projectId', select: 'name tenantId clientId' }
   ]);
 
   if (!task) {
     return sendResponse(res, 404, 'Task not found', null, false);
+  }
+
+  const newStatus = task.status;
+  if (oldStatus !== newStatus) {
+    try {
+        const project = await Project.findById(projectId).populate('clientId');
+        const tenant = await Tenant.findById(project.tenantId);
+        if (project && project.clientId && tenant && tenant.emailSetting && tenant.emailSetting.taskUpdate) {
+            await sendTaskUpdateEmail(project.tenantId, project.clientId.email, { name: task.title, status: newStatus });
+        }
+    } catch (emailError) {
+        console.error(`Failed to send task update email for task ${task._id}:`, emailError);
+    }
   }
 
   sendResponse(res, 200, 'Task updated successfully', task);
