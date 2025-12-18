@@ -7,11 +7,11 @@ const EmailTemplateType = require('../enums/EmailTemplateType');
 // @route   GET /api/v1/email-templates/types
 // @access  Private
 const getEmailTemplateTypes = asyncHandler(async (req, res) => {
-  const templateTypes = Object.keys(EmailTemplateType).map(key => ({
-    code: EmailTemplateType[key].code,
-    displayName: EmailTemplateType[key].displayName
-  }));
-  sendResponse(res, 200, 'Email template types retrieved successfully', templateTypes);
+    const templateTypes = Object.keys(EmailTemplateType).map(key => ({
+        code: EmailTemplateType[key].code,
+        displayName: EmailTemplateType[key].displayName
+    }));
+    sendResponse(res, 200, 'Email template types retrieved successfully', templateTypes);
 });
 
 // @desc    Get all email templates for a tenant
@@ -21,21 +21,31 @@ const getEmailTemplates = asyncHandler(async (req, res) => {
   const { tenantId } = req.params;
   const templates = await EmailTemplate.find({ tenantId, isActive: true });
 
-  sendResponse(res, 200, 'Email templates retrieved successfully', { templates });
+  const emailTemplateTypes = Object.values(EmailTemplateType);
+
+  const templatesWithNames = templates.map(template => {
+    const templateType = emailTemplateTypes.find(type => type.code === template.templateId);
+    return {
+      ...template.toObject(),
+      templateTypeName: templateType ? templateType.displayName : ''
+    };
+  });
+
+  sendResponse(res, 200, 'Email templates retrieved successfully', templatesWithNames);
 });
 
 // @desc    Get a single email template by ID for a tenant
 // @route   GET /api/v1/email-templates/:tenantId/:templateId
 // @access  Private
 const getEmailTemplateById = asyncHandler(async (req, res) => {
-  const { tenantId, templateId } = req.params;
-  const template = await EmailTemplate.findOne({ _id: templateId, tenantId, isActive: true });
+    const { tenantId, templateId } = req.params;
+    const template = await EmailTemplate.findOne({ _id: templateId, tenantId, isActive: true });
 
-  if (!template) {
-    return sendResponse(res, 404, 'Email template not found', null, false);
-  }
+    if (!template) {
+        return sendResponse(res, 404, 'Email template not found', null, false);
+    }
 
-  sendResponse(res, 200, 'Email template retrieved successfully', template);
+    sendResponse(res, 200, 'Email template retrieved successfully', template);
 });
 
 
