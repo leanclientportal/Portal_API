@@ -9,7 +9,7 @@ const EmailTemplateType = Object.freeze({
     },
     Invitation: {
         code: 103,
-        displayName: 'Login OTP'
+        displayName: 'Invitation'
     },
     NEW_PROJECT: {
         code: 104,

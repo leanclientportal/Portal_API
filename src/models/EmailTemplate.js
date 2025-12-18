@@ -8,7 +8,7 @@ const emailTemplateSchema = new mongoose.Schema({
     index: true
   },
   templateId: {
-    type: String,
+    type: Number,
     required: true,
     trim: true
   },
