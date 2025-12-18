@@ -6,10 +6,8 @@ const {
   updateEmailTemplate,
   deleteEmailTemplate,
 } = require('../controllers/emailTemplateController');
-const { protect } = require('../middlewares/auth');
 
 // All routes in this file are protected
-router.use(protect);
 
 // Route to get all email templates for the authenticated tenant and create a new one
 router.route('/').get(getEmailTemplates).post(createEmailTemplate);
