@@ -22,7 +22,7 @@ exports.getSmtpSettings = asyncHandler(async (req, res) => {
 // @access  Private
 exports.updateSmtpSettings = asyncHandler(async (req, res) => {
   const { tenantId } = req.params;
-  const { smtpSetting } = req.body;
+  const smtpSetting = req.body;
 
   const tenant = await Tenant.findById(tenantId);
 
@@ -30,17 +30,20 @@ exports.updateSmtpSettings = asyncHandler(async (req, res) => {
     return sendResponse(res, 404, 'Tenant not found', null, false);
   }
 
-  const updateFields = {};
-  for (const key in smtpSetting) {
-    updateFields[`smtpSetting.${key}`] = smtpSetting[key];
+  if (!smtpSetting || Object.keys(smtpSetting).length === 0) {
+    return sendResponse(res, 400, 'Smtp settings are required', null, false);
   }
 
   const updatedTenant = await Tenant.findByIdAndUpdate(
     tenantId,
-    { $set: updateFields },
+    { $set: smtpSetting },
     { new: true, runValidators: true }
   );
 
+  if (!updatedTenant) {
+    return sendResponse(res, 404, 'Tenant not found', null, false);
+  }
+  
   sendResponse(res, 200, 'SMTP settings updated successfully', updatedTenant.smtpSetting);
 });
 
@@ -64,7 +67,7 @@ exports.getEmailSettings = asyncHandler(async (req, res) => {
 // @access  Private
 exports.updateEmailSettings = asyncHandler(async (req, res) => {
   const { tenantId } = req.params;
-  const { emailSetting } = req.body;
+  const emailSetting = req.body;
 
   const tenant = await Tenant.findById(tenantId);
 
@@ -72,16 +75,19 @@ exports.updateEmailSettings = asyncHandler(async (req, res) => {
     return sendResponse(res, 404, 'Tenant not found', null, false);
   }
 
-  const updateFields = {};
-  for (const key in emailSetting) {
-    updateFields[`emailSetting.${key}`] = emailSetting[key];
+  if (!emailSetting || Object.keys(emailSetting).length === 0) {
+    return sendResponse(res, 400, 'Email settings are required', null, false);
   }
 
   const updatedTenant = await Tenant.findByIdAndUpdate(
     tenantId,
-    { $set: updateFields },
+    { $set: emailSetting },
     { new: true, runValidators: true }
   );
+
+  if (!updatedTenant) {
+    return sendResponse(res, 404, 'Tenant not found', null, false);
+  }
 
   sendResponse(res, 200, 'Email settings updated successfully', updatedTenant.emailSetting);
 });
