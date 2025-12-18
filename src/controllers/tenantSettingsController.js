@@ -36,14 +36,14 @@ exports.updateSmtpSettings = asyncHandler(async (req, res) => {
 
   const updatedTenant = await Tenant.findByIdAndUpdate(
     tenantId,
-    { $set: smtpSetting },
+    { $set: { smtpSetting } },
     { new: true, runValidators: true }
   );
 
   if (!updatedTenant) {
     return sendResponse(res, 404, 'Tenant not found', null, false);
   }
-  
+
   sendResponse(res, 200, 'SMTP settings updated successfully', updatedTenant.smtpSetting);
 });
 
@@ -81,7 +81,7 @@ exports.updateEmailSettings = asyncHandler(async (req, res) => {
 
   const updatedTenant = await Tenant.findByIdAndUpdate(
     tenantId,
-    { $set: emailSetting },
+    { $set: { emailSetting } },
     { new: true, runValidators: true }
   );
 
