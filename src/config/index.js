@@ -28,9 +28,12 @@ module.exports = {
   Login_OTP_Email_Temaplate_Id: 102,
   Invitation_Email_Temaplate_Id: 103,
   Project_Email_Temaplate_Id: 104,
-  Task_Email_Temaplate_Id: 105,
-  Document_Email_Temaplate_Id: 106,
-  Invoice_Email_Temaplate_Id: 107,
+  Project_Email_Temaplate_Id: 105,
+  Task_Email_Temaplate_Id: 106,
+  Task_Email_Temaplate_Id: 107,
+  Document_Email_Temaplate_Id: 108,
+  Invoice_Email_Temaplate_Id: 109,
+  Invoice_Email_Temaplate_Id: 110,
 
   FrontEnd_Base_Url: 'https://9000-firebase-clientportal-1762332719156.cluster-isls3qj2gbd5qs4jkjqvhahfv6.cloudworkstations.dev',
 };

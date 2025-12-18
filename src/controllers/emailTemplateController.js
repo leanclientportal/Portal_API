@@ -1,6 +1,18 @@
 const EmailTemplate = require('../models/EmailTemplate');
 const asyncHandler = require('../middlewares/asyncHandler');
 const sendResponse = require('../utils/apiResponse');
+const EmailTemplateType = require('../enums/EmailTemplateType');
+
+// @desc    Get all email template types for a dropdown
+// @route   GET /api/v1/email-templates/types
+// @access  Private
+const getEmailTemplateTypes = asyncHandler(async (req, res) => {
+    const templateTypes = Object.keys(EmailTemplateType).map(key => ({
+        code: EmailTemplateType[key].code,
+        displayName: EmailTemplateType[key].displayName
+    }));
+    sendResponse(res, 200, 'Email template types retrieved successfully', templateTypes);
+});
 
 // @desc    Get all email templates for a tenant
 // @route   GET /api/v1/email-templates/:tenantId
@@ -90,6 +102,7 @@ const deleteEmailTemplate = asyncHandler(async (req, res) => {
 });
 
 module.exports = {
+  getEmailTemplateTypes,
   getEmailTemplates,
   getEmailTemplateById,
   createEmailTemplate,

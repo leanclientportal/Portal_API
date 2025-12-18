@@ -71,6 +71,10 @@ const tenantSchema = new mongoose.Schema({
     invoiceUpload: {
         type: Boolean,
         default: true
+    },
+    invoicePaid: {
+        type: Boolean,
+        default: true
     }
   }
 }, {

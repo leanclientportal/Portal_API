@@ -1,5 +1,6 @@
 const express = require('express');
 const {
+  getEmailTemplateTypes,
   getEmailTemplates,
   getEmailTemplateById,
   createEmailTemplate,
@@ -8,6 +9,8 @@ const {
 } = require('../controllers/emailTemplateController');
 
 const router = express.Router();
+
+router.route('/types').get(getEmailTemplateTypes);
 
 router.route('/:tenantId')
   .get(getEmailTemplates)
