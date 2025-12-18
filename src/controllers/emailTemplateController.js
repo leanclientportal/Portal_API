@@ -3,20 +3,35 @@ const asyncHandler = require('../middlewares/asyncHandler');
 const sendResponse = require('../utils/apiResponse');
 
 // @desc    Get all email templates for a tenant
-// @route   GET /api/v1/email-templates
+// @route   GET /api/v1/email-templates/:tenantId
 // @access  Private
 const getEmailTemplates = asyncHandler(async (req, res) => {
-  const tenantId = req.user.tenantId;
+  const { tenantId } = req.params;
   const templates = await EmailTemplate.find({ tenantId, isActive: true });
 
   sendResponse(res, 200, 'Email templates retrieved successfully', templates);
 });
 
-// @desc    Create a new email template
-// @route   POST /api/v1/email-templates
+// @desc    Get a single email template by ID for a tenant
+// @route   GET /api/v1/email-templates/:tenantId/:templateId
+// @access  Private
+const getEmailTemplateById = asyncHandler(async (req, res) => {
+    const { tenantId, templateId } = req.params;
+    const template = await EmailTemplate.findOne({ _id: templateId, tenantId, isActive: true });
+
+    if (!template) {
+        return sendResponse(res, 404, 'Email template not found', null, false);
+    }
+
+    sendResponse(res, 200, 'Email template retrieved successfully', template);
+});
+
+
+// @desc    Create a new email template for a tenant
+// @route   POST /api/v1/email-templates/:tenantId
 // @access  Private
 const createEmailTemplate = asyncHandler(async (req, res) => {
-  const tenantId = req.user.tenantId;
+  const { tenantId } = req.params;
   const { templateId, name, subject, body, isDefault } = req.body;
 
   const newTemplate = await EmailTemplate.create({
@@ -31,12 +46,11 @@ const createEmailTemplate = asyncHandler(async (req, res) => {
   sendResponse(res, 201, 'Email template created successfully', newTemplate);
 });
 
-// @desc    Update an email template
-// @route   PUT /api/v1/email-templates/:id
+// @desc    Update an email template for a tenant
+// @route   PUT /api/v1/email-templates/:tenantId/:templateId
 // @access  Private
 const updateEmailTemplate = asyncHandler(async (req, res) => {
-  const { id } = req.params;
-  const tenantId = req.user.tenantId;
+  const { tenantId, templateId } = req.params;
 
   // Prevent updating tenantId
   if (req.body.tenantId) {
@@ -44,7 +58,7 @@ const updateEmailTemplate = asyncHandler(async (req, res) => {
   }
 
   const updatedTemplate = await EmailTemplate.findOneAndUpdate(
-    { _id: id, tenantId },
+    { _id: templateId, tenantId },
     req.body,
     { new: true, runValidators: true }
   );
@@ -56,15 +70,14 @@ const updateEmailTemplate = asyncHandler(async (req, res) => {
   sendResponse(res, 200, 'Email template updated successfully', updatedTemplate);
 });
 
-// @desc    Delete an email template (soft delete)
-// @route   DELETE /api/v1/email-templates/:id
+// @desc    Delete an email template for a tenant (soft delete)
+// @route   DELETE /api/v1/email-templates/:tenantId/:templateId
 // @access  Private
 const deleteEmailTemplate = asyncHandler(async (req, res) => {
-  const { id } = req.params;
-  const tenantId = req.user.tenantId;
+  const { tenantId, templateId } = req.params;
 
   const template = await EmailTemplate.findOneAndUpdate(
-    { _id: id, tenantId },
+    { _id: templateId, tenantId },
     { isActive: false },
     { new: true }
   );
@@ -78,6 +91,7 @@ const deleteEmailTemplate = asyncHandler(async (req, res) => {
 
 module.exports = {
   getEmailTemplates,
+  getEmailTemplateById,
   createEmailTemplate,
   updateEmailTemplate,
   deleteEmailTemplate,
