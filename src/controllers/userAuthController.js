@@ -139,9 +139,9 @@ const verifyOtp = asyncHandler(async (req, res) => {
         activeProfileImage = client.profileImageUrl;
         profileName = client.name;
       }
-      profileName = 'client';
       console.log(client);
     }
+    profileName = 'client';
   }
 
   if (user) {
