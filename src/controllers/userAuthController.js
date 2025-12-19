@@ -128,13 +128,13 @@ const verifyOtp = asyncHandler(async (req, res) => {
   } else if (user) {
     activeProfileId = user.activeProfileId;
     if (user.activeProfile === 'tenant') {
-      const tenant = await Tenant.findById(new mongoose.Types.ObjectId(activeProfileId));
+      const tenant = await Tenant.findById(activeProfileId);
       if (tenant) {
         activeProfileImage = tenant.profileImageUrl;
         profileName = tenant.companyName;
       }
     } else if (user.activeProfile === 'client') {
-      const client = await Client.findById(new mongoose.Types.ObjectId(activeProfileId));
+      const client = await Client.findById(activeProfileId);
       if (client) {
         activeProfileImage = client.profileImageUrl;
         profileName = client.name;
