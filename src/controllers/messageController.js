@@ -2,6 +2,9 @@ const Message = require('../models/Message');
 const asyncHandler = require('../middlewares/asyncHandler');
 const ErrorResponse = require('../utils/errorResponse');
 const config = require('../config');
+const Tenant = require('../models/Tenant');
+const TenantClientMapping = require('../models/TenantClientMapping');
+const Client = require('../models/Client');
 
 // @desc    Get all messages
 // @route   GET /api/v1/messages
@@ -43,7 +46,7 @@ exports.getConversations = asyncHandler(async (req, res, next) => {
   if (activeProfile === 'tenant') {
     const tenant = await Tenant.findById(activeProfileId);
     if (tenant) {
-      const clientMappings = await TenantClientMapping.find({ activeProfileId }).select('clientId');
+      const clientMappings = await TenantClientMapping.find({ tenantId: activeProfileId }).select('clientId');
       const clientIds = clientMappings.map(mapping => mapping.clientId);
 
       const query = { _id: { $in: clientIds }, isActive: true };
@@ -77,8 +80,36 @@ exports.getConversations = asyncHandler(async (req, res, next) => {
   } else if (activeProfile === 'client') {
     const client = await Client.findById(activeProfileId);
     if (client) {
-      activeProfileImage = client.profileImageUrl;
-      profileName = client.name;
+      const tenantMappings = await TenantClientMapping.find({ clientId: activeProfileId }).select('tenantId');
+      const tenantIds = tenantMappings.map(mapping => mapping.tenantId);
+
+      const query = { _id: { $in: tenantIds }, isActive: true };
+
+      const tenants = await Tenant.find(query)
+        .sort({ createdAt: -1 })
+        .limit(parseInt(limit))
+        .skip((parseInt(page) - 1) * parseInt(limit));
+
+      for (const tenant of tenants) {
+        const chatQuery = {
+          $or: [
+            { senderId: activeProfileId, senderType: activeProfile, receiverId: tenant._id, receiverType: config.Tenant },
+            { senderId: tenant._id, senderType: config.Tenant, receiverId: activeProfileId, receiverType: activeProfile }
+          ]
+        };
+
+        const messages = await Message.findOne(chatQuery).sort({ createdAt: -1 });
+        if (messages) {
+          conversations.push({
+            name: tenant.companyName,
+            profileImageUrl: tenant.profileImageUrl,
+            lastMessage: messages.message,
+            lastMessageDate: messages.createdAt,
+            unreadCount: 0,
+            type: messages.receiverType
+          })
+        }
+      }
     }
   }
 
