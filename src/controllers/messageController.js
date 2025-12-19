@@ -52,9 +52,7 @@ exports.getConversations = asyncHandler(async (req, res, next) => {
       const query = { _id: { $in: clientIds }, isActive: true };
 
       const clients = await Client.find(query)
-        .sort({ createdAt: -1 })
-        .limit(parseInt(limit))
-        .skip((parseInt(page) - 1) * parseInt(limit));
+        .sort({ createdAt: -1 });
 
       for (const client of clients) {
         const chatQuery = {
@@ -86,9 +84,7 @@ exports.getConversations = asyncHandler(async (req, res, next) => {
       const query = { _id: { $in: tenantIds }, isActive: true };
 
       const tenants = await Tenant.find(query)
-        .sort({ createdAt: -1 })
-        .limit(parseInt(limit))
-        .skip((parseInt(page) - 1) * parseInt(limit));
+        .sort({ createdAt: -1 });
 
       for (const tenant of tenants) {
         const chatQuery = {
