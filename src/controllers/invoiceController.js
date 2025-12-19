@@ -64,7 +64,8 @@ const createInvoice = asyncHandler(async (req, res) => {
   try {
     const tenant = await Tenant.findById(project.tenantId);
     if (project.clientId && tenant && tenant.emailSetting && tenant.emailSetting.invoiceUpload) {
-        await sendInvoiceUploadEmail(project.tenantId, project.clientId.email, { number: invoice.title, amount: invoice.amount });
+        const attachments = invoice.invoiceUrl ? [{ path: invoice.invoiceUrl }] : [];
+        await sendInvoiceUploadEmail(project.tenantId, project.clientId.email, { number: invoice.title, amount: invoice.amount }, attachments);
     }
   } catch (emailError) {
       console.error(`Failed to send invoice upload email for invoice ${invoice._id}:`, emailError);
@@ -157,7 +158,8 @@ const markAsPaid = asyncHandler(async (req, res) => {
   try {
     const tenant = await Tenant.findById(invoice.projectId.tenantId);
     if (invoice.projectId.clientId && tenant && tenant.emailSetting && tenant.emailSetting.invoicePaid) {
-        await sendInvoicePaidEmail(invoice.projectId.tenantId, invoice.projectId.clientId.email, { number: invoice.title, amount: invoice.amount });
+        const attachments = invoice.invoiceUrl ? [{ path: invoice.invoiceUrl }] : [];
+        await sendInvoicePaidEmail(invoice.projectId.tenantId, invoice.projectId.clientId.email, { number: invoice.title, amount: invoice.amount }, attachments);
     }
   } catch (emailError) {
       console.error(`Failed to send invoice paid email for invoice ${invoice._id}:`, emailError);

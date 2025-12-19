@@ -21,6 +21,8 @@ const invoiceRoutes = require('./routes/invoiceRoutes');
 const documentRoutes = require('./routes/documentRoutes');
 const emailTemplateRoutes = require('./routes/emailTemplateRoutes'); // Added email template routes
 const tenantSettingsRoutes = require('./routes/tenantSettingsRoutes');
+const messageRoutes = require('./routes/messageRoutes');
+const chatRoutes = require('./routes/chatRoutes');
 
 // Swagger documentation
 const { swaggerUi, specs } = require('./config/swagger');
@@ -109,6 +111,8 @@ app.use(`${API_VERSION}/tasks`, taskRoutes);
 app.use(`${API_VERSION}/invoices`, invoiceRoutes);
 app.use(`${API_VERSION}/documents`, documentRoutes);
 app.use(`${API_VERSION}/email-templates`, emailTemplateRoutes); // Added email template routes
+app.use(`${API_VERSION}/messages`, messageRoutes);
+app.use(`${API_VERSION}/chats`, chatRoutes);
 
 // Welcome message
 app.get('/', (req, res) => {

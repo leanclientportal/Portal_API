@@ -2,7 +2,7 @@ const nodemailer = require('nodemailer');
 const config = require('../config');
 const Tenant = require('../models/Tenant');
 
-const sendEmail = async (tenantId, to, subject, text, html) => {
+const sendEmail = async (tenantId, to, subject, text, html, attachments) => {
   let transporterConfig = config.email.transport;
   let fromAddress = config.email.from;
 
@@ -40,6 +40,7 @@ const sendEmail = async (tenantId, to, subject, text, html) => {
     subject: subject,
     text: text,
     html: html,
+    attachments: attachments,
   };
 
   try {

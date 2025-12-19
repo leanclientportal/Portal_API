@@ -240,7 +240,7 @@ const sendDocumentUploadEmail = async (tenantId, recipientEmail, documentDetails
     }
 };
 
-const sendInvoiceUploadEmail = async (tenantId, recipientEmail, invoiceDetails) => {
+const sendInvoiceUploadEmail = async (tenantId, recipientEmail, invoiceDetails, attachments) => {
     const emailTemplate = await getEmailTemplate(tenantId, EmailTemplateType.INVOICE_UPLOAD.code);
 
     let subject;
@@ -261,14 +261,14 @@ const sendInvoiceUploadEmail = async (tenantId, recipientEmail, invoiceDetails) 
     }
 
     try {
-        await sendEmail(tenantId, recipientEmail, subject, text, html);
+        await sendEmail(tenantId, recipientEmail, subject, text, html, attachments);
     } catch (error) {
         console.error('Error sending invoice upload email:', error);
         throw new Error('Failed to send invoice upload email.');
     }
 };
 
-const sendInvoicePaidEmail = async (tenantId, recipientEmail, invoiceDetails) => {
+const sendInvoicePaidEmail = async (tenantId, recipientEmail, invoiceDetails, attachments) => {
     const emailTemplate = await getEmailTemplate(tenantId, EmailTemplateType.INVOICE_PAID.code);
 
     let subject;
@@ -289,7 +289,7 @@ const sendInvoicePaidEmail = async (tenantId, recipientEmail, invoiceDetails) =>
     }
 
     try {
-        await sendEmail(tenantId, recipientEmail, subject, text, html);
+        await sendEmail(tenantId, recipientEmail, subject, text, html, attachments);
     } catch (error) {
         console.error('Error sending invoice paid email:', error);
         throw new Error('Failed to send invoice paid email.');
