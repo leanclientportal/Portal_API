@@ -25,6 +25,11 @@ exports.getMessages = asyncHandler(async (req, res, next) => {
     ]
   };
 
+  await Message.updateMany(
+    { senderId: senderId, receiverId: receiverId, read: false },
+    { $set: { read: true } }
+  );
+
   const messages = await Message.find(query);
 
   res.status(200).json({
@@ -63,15 +68,17 @@ exports.getConversations = asyncHandler(async (req, res, next) => {
           ]
         };
 
-        const messages = await Message.findOne(chatQuery).sort({ createdAt: -1 });
-        if (messages) {
+        const lastMessage = await Message.findOne(chatQuery).sort({ createdAt: -1 });
+        const unreadCount = await Message.countDocuments({ ...chatQuery, read: false, receiverId: activeProfileId });
+
+        if (lastMessage) {
           conversations.push({
             id: client._id,
             name: client.name,
             profileImageUrl: client.profileImageUrl,
-            lastMessage: messages.message,
-            lastMessageDate: messages.createdAt,
-            unreadCount: 0,
+            lastMessage: lastMessage.message,
+            lastMessageDate: lastMessage.createdAt,
+            unreadCount: unreadCount,
             type: config.Client
           })
         }
@@ -96,15 +103,17 @@ exports.getConversations = asyncHandler(async (req, res, next) => {
           ]
         };
 
-        const messages = await Message.findOne(chatQuery).sort({ createdAt: -1 });
-        if (messages) {
+        const lastMessage = await Message.findOne(chatQuery).sort({ createdAt: -1 });
+        const unreadCount = await Message.countDocuments({ ...chatQuery, read: false, receiverId: activeProfileId });
+
+        if (lastMessage) {
           conversations.push({
             id: tenant._id,
             name: tenant.companyName,
             profileImageUrl: tenant.profileImageUrl,
-            lastMessage: messages.message,
-            lastMessageDate: messages.createdAt,
-            unreadCount: 0,
+            lastMessage: lastMessage.message,
+            lastMessageDate: lastMessage.createdAt,
+            unreadCount: unreadCount,
             type: config.Tenant
           })
         }
@@ -185,4 +194,22 @@ exports.deleteMessage = asyncHandler(async (req, res, next) => {
     success: true,
     data: {},
   });
+});
+
+// @desc    Mark messages as read
+// @route   POST /api/v1/messages/read-messages/:senderId/:receiverId
+// @access  Private
+exports.readMessages = asyncHandler(async (req, res, next) => {
+  const { senderId, receiverId } = req.params;
+
+  if (!senderId || !receiverId) {
+    return next(new ErrorResponse('Please provide senderId and receiverId', 400));
+  }
+
+  await Message.updateMany(
+    { senderId: senderId, receiverId: receiverId, read: false },
+    { $set: { read: true } }
+  );
+
+  sendResponse(res, 200, 'Messages marked as read successfully', {});
 });
