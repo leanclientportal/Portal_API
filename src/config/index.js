@@ -24,6 +24,11 @@ module.exports = {
     }
   },
 
+  Client: 'client',
+  Tenant: 'tenant',
+  Admin: 'admin',
+
+
   Registation_OTP_Email_Temaplate_Id: 101,
   Login_OTP_Email_Temaplate_Id: 102,
   Invitation_Email_Temaplate_Id: 103,

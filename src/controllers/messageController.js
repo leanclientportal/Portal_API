@@ -1,6 +1,7 @@
 const Message = require('../models/Message');
 const asyncHandler = require('../middlewares/asyncHandler');
 const ErrorResponse = require('../utils/errorResponse');
+const config = require('../config');
 
 // @desc    Get all messages
 // @route   GET /api/v1/messages
@@ -26,6 +27,65 @@ exports.getMessages = asyncHandler(async (req, res, next) => {
     success: true,
     count: messages.length,
     data: { messages },
+  });
+});
+
+// @desc    Get all conversations
+// @route   GET /api/v1/conversations/:activeProfileId/:activeProfile
+// @access  Private
+exports.getConversations = asyncHandler(async (req, res, next) => {
+  const { activeProfileId, activeProfile } = req.params;
+
+  if (!activeProfileId || !activeProfile) {
+    return next(new ErrorResponse('Please provide activeProfileId and activeProfile.', 400));
+  }
+  let conversations = [];
+  if (activeProfile === 'tenant') {
+    const tenant = await Tenant.findById(activeProfileId);
+    if (tenant) {
+      const clientMappings = await TenantClientMapping.find({ activeProfileId }).select('clientId');
+      const clientIds = clientMappings.map(mapping => mapping.clientId);
+
+      const query = { _id: { $in: clientIds }, isActive: true };
+
+      const clients = await Client.find(query)
+        .sort({ createdAt: -1 })
+        .limit(parseInt(limit))
+        .skip((parseInt(page) - 1) * parseInt(limit));
+
+      for (const client of clients) {
+        const chatQuery = {
+          $or: [
+            { senderId: activeProfileId, senderType: activeProfile, receiverId: client._id, receiverType: config.Client },
+            { senderId: client._id, senderType: config.Client, receiverId: activeProfileId, receiverType: activeProfile }
+          ]
+        };
+
+        const messages = await Message.findOne(chatQuery).sort({ createdAt: -1 });
+        if (messages) {
+          conversations.push({
+            name: client.name,
+            profileImageUrl: client.profileImageUrl,
+            lastMessage: messages.message,
+            lastMessageDate: messages.createdAt,
+            unreadCount: 0,
+            type: messages.receiverType
+          })
+        }
+      }
+    }
+  } else if (activeProfile === 'client') {
+    const client = await Client.findById(activeProfileId);
+    if (client) {
+      activeProfileImage = client.profileImageUrl;
+      profileName = client.name;
+    }
+  }
+
+  res.status(200).json({
+    success: true,
+    count: messages.length,
+    data: { conversations },
   });
 });
 
