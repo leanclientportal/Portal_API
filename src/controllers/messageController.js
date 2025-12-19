@@ -108,12 +108,7 @@ exports.getConversations = asyncHandler(async (req, res, next) => {
       }
     }
   }
-
-  res.status(200).json({
-    success: true,
-    count: messages.length,
-    data: { conversations },
-  });
+  sendResponse(res, 200, 'Clients retrieved successfully', { conversations });
 });
 
 // @desc    Get single message
