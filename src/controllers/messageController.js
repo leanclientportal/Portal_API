@@ -26,7 +26,7 @@ exports.getMessages = asyncHandler(async (req, res, next) => {
   };
 
   await Message.updateMany(
-    { senderId: senderId, receiverId: receiverId, read: false },
+    { senderId: receiverId, receiverId: senderId, read: false },
     { $set: { read: true } }
   );
 
