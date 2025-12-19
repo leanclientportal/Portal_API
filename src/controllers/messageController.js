@@ -66,12 +66,13 @@ exports.getConversations = asyncHandler(async (req, res, next) => {
         const messages = await Message.findOne(chatQuery).sort({ createdAt: -1 });
         if (messages) {
           conversations.push({
+            id: client._id,
             name: client.name,
             profileImageUrl: client.profileImageUrl,
             lastMessage: messages.message,
             lastMessageDate: messages.createdAt,
             unreadCount: 0,
-            type: messages.receiverType
+            type: config.Client
           })
         }
       }
@@ -98,12 +99,13 @@ exports.getConversations = asyncHandler(async (req, res, next) => {
         const messages = await Message.findOne(chatQuery).sort({ createdAt: -1 });
         if (messages) {
           conversations.push({
+            id: tenant._id,
             name: tenant.companyName,
             profileImageUrl: tenant.profileImageUrl,
             lastMessage: messages.message,
             lastMessageDate: messages.createdAt,
             unreadCount: 0,
-            type: messages.receiverType
+            type: config.Tenant
           })
         }
       }
