@@ -5,6 +5,7 @@ const config = require('../config');
 const Tenant = require('../models/Tenant');
 const TenantClientMapping = require('../models/TenantClientMapping');
 const Client = require('../models/Client');
+const sendResponse = require('../utils/apiResponse');
 
 // @desc    Get all messages
 // @route   GET /api/v1/messages
