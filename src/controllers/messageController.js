@@ -25,7 +25,7 @@ exports.getMessages = asyncHandler(async (req, res, next) => {
   res.status(200).json({
     success: true,
     count: messages.length,
-    data: messages,
+    data: { messages },
   });
 });
 
