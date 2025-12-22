@@ -18,18 +18,33 @@ const dashboardWidgets = asyncHandler(async (req, res) => {
   const clientIds = clientMappings.map(mapping => mapping.clientId);
 
   // Total Clients
-  const totalClients = clientIds.length;
+  const totalClients = await Client.countDocuments({ _id: { $in: clientIds }, isActive: true });
 
   // Active Projects
-  const activeProjects = await Project.countDocuments({ tenantId, clientId: { $in: clientIds }, status: 'Active' });
+  const activeProjects = await Project.countDocuments({ tenantId, clientId: { $in: clientIds }, status: 'Active', isDeleted: false });
 
   // Pending Tasks
-  const projects = await Project.find({ tenantId, clientId: { $in: clientIds }, status: 'Active' }).select('_id');
+  const projects = await Project.find({ tenantId, clientId: { $in: clientIds }, isDeleted: false }).select('_id');
   const projectIds = projects.map(project => project._id);
   const pendingTasks = await Task.countDocuments({ projectId: { $in: projectIds }, status: { $in: ['Pending', 'In-Progress'] } });
 
   // Outstanding Invoices
-  const outstandingInvoices = await Invoice.countDocuments({ projectId: { $in: projectIds }, status: { $in: ['Unpaid', 'Due'] } });
+  const result = await Invoice.aggregate([
+    {
+      $match: {
+        projectId: { $in: projectIds },
+        status: { $in: ['pending'] }
+      }
+    },
+    {
+      $group: {
+        _id: null,
+        amount: { $sum: '$amount' }
+      }
+    }
+  ]);
+
+  const outstandingInvoices = result.length > 0 ? result[0].amount : 0;
 
   const widgets = {
     totalClients,
@@ -51,20 +66,18 @@ const dashboardOverview = asyncHandler(async (req, res) => {
   const clientMappings = await TenantClientMapping.find({ tenantId }).select('clientId');
   const clientIds = clientMappings.map(mapping => mapping.clientId);
 
-  const topClients = await Client.find({ _id: { $in: clientIds }, isDeleted: false }).sort({ createdAt: -1 }).limit(5);
+  const topClients = await Client.find({ _id: { $in: clientIds }, isActive: true }).sort({ lastActivityDate: -1 }).limit(5);
 
-  const topProjects = await Project.find({ tenantId, clientId: { $in: clientIds }, isDeleted: false }).sort({ createdAt: -1 }).limit(5);
+  const topProjects = await Project.find({ tenantId, clientId: { $in: clientIds }, isDeleted: false }).sort({ lastActivityDate: -1 }).limit(5);
 
   const projects = await Project.find({ tenantId, clientId: { $in: clientIds }, isDeleted: false }).select('_id');
   const projectIds = projects.map(project => project._id);
 
-  const latestTasks = await Task.find({ projectId: { $in: projectIds } }).sort({ createdAt: -1 }).limit(5);
+  const latestTasks = await Task.find({ projectId: { $in: projectIds }, isActive: true }).sort({ createdAt: -1 }).limit(5);
 
   const latestDocuments = await Document.find({ projectId: { $in: projectIds } }).sort({ createdAt: -1 }).limit(5);
 
-  const latestInvoices = await Invoice.find({ projectId: { $in: projectIds } }).sort({ createdAt: -1 }).limit(5);
-
-  const latestNotifications = await NotificationLog.find({ tenantId }).sort({ createdAt: -1 }).limit(5);
+  const latestInvoices = await Invoice.find({ projectId: { $in: projectIds }, isDeleted: false }).sort({ createdAt: -1 }).limit(5);
 
   const overview = {
     topClients,
@@ -72,7 +85,6 @@ const dashboardOverview = asyncHandler(async (req, res) => {
     latestTasks,
     latestDocuments,
     latestInvoices,
-    latestNotifications,
   };
 
   sendResponse(res, 200, 'Dashboard overview retrieved successfully', overview);
