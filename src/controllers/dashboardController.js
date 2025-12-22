@@ -21,12 +21,12 @@ const dashboardWidgets = asyncHandler(async (req, res) => {
   const totalClients = await Client.countDocuments({ _id: { $in: clientIds }, isActive: true });
 
   // Active Projects
-  const activeProjects = await Project.countDocuments({ tenantId, clientId: { $in: clientIds }, status: 'Active', isDeleted: false });
+  const activeProjects = await Project.countDocuments({ tenantId, clientId: { $in: clientIds }, status: 'active', isDeleted: false });
 
   // Pending Tasks
   const projects = await Project.find({ tenantId, clientId: { $in: clientIds }, isDeleted: false }).select('_id');
   const projectIds = projects.map(project => project._id);
-  const pendingTasks = await Task.countDocuments({ projectId: { $in: projectIds }, status: { $in: ['Pending', 'In-Progress'] } });
+  const pendingTasks = await Task.countDocuments({ projectId: { $in: projectIds }, status: { $in: ['pending'] } });
 
   // Outstanding Invoices
   const result = await Invoice.aggregate([
@@ -64,9 +64,13 @@ const dashboardOverview = asyncHandler(async (req, res) => {
   const { tenantId } = req.params;
 
   const clientMappings = await TenantClientMapping.find({ tenantId }).select('clientId');
-  const clientIds = clientMappings.map(mapping => mapping.clientId);
+  const mapClientIds = clientMappings.map(mapping => mapping.clientId);
 
-  const topClients = await Client.find({ _id: { $in: clientIds }, isActive: true }).sort({ lastActivityDate: -1 }).limit(5);
+  const topClients = await Client.find({ _id: { $in: mapClientIds }, isActive: true }).sort({ lastActivityDate: -1 }).limit(5);
+
+  const allClients = await Client.find({ _id: { $in: mapClientIds }, isActive: true }).sort({ lastActivityDate: -1 }).select('_id');
+
+  const clientIds = allClients.map(mapping => mapping._id);
 
   const topProjects = await Project.find({ tenantId, clientId: { $in: clientIds }, isDeleted: false }).sort({ lastActivityDate: -1 }).limit(5);
 
