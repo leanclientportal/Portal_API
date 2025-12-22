@@ -23,6 +23,7 @@ const emailTemplateRoutes = require('./routes/emailTemplateRoutes'); // Added em
 const tenantSettingsRoutes = require('./routes/tenantSettingsRoutes');
 const messageRoutes = require('./routes/messageRoutes');
 const chatRoutes = require('./routes/chatRoutes');
+const dashboardRoutes = require('./routes/dashboardRoutes');
 
 // Swagger documentation
 const { swaggerUi, specs } = require('./config/swagger');
@@ -113,6 +114,7 @@ app.use(`${API_VERSION}/documents`, documentRoutes);
 app.use(`${API_VERSION}/email-templates`, emailTemplateRoutes); // Added email template routes
 app.use(`${API_VERSION}/messages`, messageRoutes);
 app.use(`${API_VERSION}/chats`, chatRoutes);
+app.use(`${API_VERSION}/dashboard`, dashboardRoutes);
 
 // Welcome message
 app.get('/', (req, res) => {
