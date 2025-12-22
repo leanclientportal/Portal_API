@@ -1,9 +1,9 @@
 const express = require('express');
-const { dashboardWidgets } = require('../controllers/dashboardController');
-const { protect } = require('../middlewares/auth');
+const { dashboardWidgets, dashboardOverview } = require('../controllers/dashboardController');
 
 const router = express.Router();
 
-router.get('/:tenantId', protect, dashboardWidgets);
+router.get('/:tenantId', dashboardWidgets);
+router.get('/overview/:tenantId', dashboardOverview);
 
 module.exports = router;

@@ -2,6 +2,8 @@ const Client = require('../models/Client');
 const Project = require('../models/Project');
 const Task = require('../models/Task');
 const Invoice = require('../models/Invoice');
+const Document = require('../models/Document');
+const NotificationLog = require('../models/NotificationLog');
 const asyncHandler = require('../middlewares/asyncHandler');
 const sendResponse = require('../utils/apiResponse');
 
@@ -37,6 +39,38 @@ const dashboardWidgets = asyncHandler(async (req, res) => {
   sendResponse(res, 200, 'Dashboard widgets retrieved successfully', widgets);
 });
 
+
+// @desc    Get dashboard overview
+// @route   GET /api/v1/dashboard/overview/:tenantId
+// @access  Private
+const dashboardOverview = asyncHandler(async (req, res) => {
+  const { tenantId } = req.params;
+
+  const topClients = await Client.find({ tenantId, isDeleted: false }).sort({ lastActiveDate: -1 }).limit(5);
+
+  const topProjects = await Project.find({ tenantId, isDeleted: false }).sort({ lastActiveDate: -1 }).limit(5);
+
+  const projects = await Project.find({ tenantId, isDeleted: false }).select('_id');
+  const projectIds = projects.map(project => project._id);
+
+  const latestTasks = await Task.find({ projectId: { $in: projectIds } }).sort({ createdAt: -1 }).limit(5);
+
+  const latestDocuments = await Document.find({ projectId: { $in: projectIds } }).sort({ createdAt: -1 }).limit(5);
+
+  const latestInvoices = await Invoice.find({ projectId: { $in: projectIds } }).sort({ createdAt: -1 }).limit(5);
+
+  const overview = {
+    topClients,
+    topProjects,
+    latestTasks,
+    latestDocuments,
+    latestInvoices,
+  };
+
+  sendResponse(res, 200, 'Dashboard overview retrieved successfully', overview);
+});
+
 module.exports = {
   dashboardWidgets,
+  dashboardOverview,
 };
