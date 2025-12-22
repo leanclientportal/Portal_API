@@ -28,5 +28,5 @@ exports.getTenantsByClientId = asyncHandler(async (req, res, next) => {
     label: tenant.companyName,
   }));
 
-  sendResponse(res, 200, 'Tenants retrieved successfully', { tenants: formattedTenants });
+  sendResponse(res, 200, 'Tenants retrieved successfully', formattedTenants);
 });
