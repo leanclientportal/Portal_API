@@ -12,7 +12,7 @@ const config = require('../config');
 // @route   GET /api/v1/dashboard/:activeProfileId/:activeProfile
 // @access  Private
 const dashboardWidgets = asyncHandler(async (req, res) => {
-  const { activeProfile, activeProfileId } = req.params;
+  const { activeProfileId, activeProfile } = req.params;
   let tenantId;
   let clientId;
 
@@ -55,10 +55,9 @@ const dashboardWidgets = asyncHandler(async (req, res) => {
     };
 
   } else if (activeProfile === config.Client) {
-    const mapping = await TenantClientMapping.findOne({ clientId: activeProfileId }).select('tenantId');
     clientId = activeProfileId;
-    const clientMappings = await TenantClientMapping.find({ tenantId }).select('clientId');
-    const tenantIds = clientMappings.map(mapping => mapping.clientId);
+    const tcMappings = await TenantClientMapping.find({ clientId }).select('tenantId');
+    const tenantIds = tcMappings.map(mapping => mapping.tenantId);
 
     const totalTenants = await Tenant.countDocuments({ _id: { $in: tenantIds }, isActive: true });
     const activeProjects = await Project.countDocuments({ tenantId: { $in: tenantIds }, clientId, status: 'active', isDeleted: false });
@@ -99,7 +98,7 @@ const dashboardWidgets = asyncHandler(async (req, res) => {
 // @route   GET /api/v1/dashboard/overview/:activeProfileId/:activeProfile
 // @access  Private
 const dashboardOverview = asyncHandler(async (req, res) => {
-  const { activeProfile, activeProfileId } = req.params;
+  const { activeProfileId, activeProfile } = req.params;
   let tenantId;
   let clientId;
 
@@ -133,7 +132,6 @@ const dashboardOverview = asyncHandler(async (req, res) => {
     };
 
   } else if (activeProfile === config.Client) {
-    const mapping = await TenantClientMapping.findOne({ clientId: activeProfileId });
     const tenantMappings = await TenantClientMapping.find({ clientId: activeProfileId }).select('tenantId');
     const mapTenantIds = tenantMappings.map(mapping => mapping.tenantId);
 
