@@ -3,7 +3,7 @@ const { dashboardWidgets, dashboardOverview } = require('../controllers/dashboar
 
 const router = express.Router();
 
-router.get('/:tenantId', dashboardWidgets);
-router.get('/overview/:tenantId', dashboardOverview);
+router.get('/:activeProfileId/:activeProfile', dashboardWidgets);
+router.get('/overview/:activeProfileId/:activeProfile', dashboardOverview);
 
 module.exports = router;
