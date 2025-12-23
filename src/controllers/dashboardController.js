@@ -35,7 +35,8 @@ const dashboardWidgets = asyncHandler(async (req, res) => {
       {
         $match: {
           projectId: { $in: projectIds },
-          status: { $in: ['pending'] }
+          status: { $in: ['pending'] },
+          isDeleted: false
         }
       },
       {
@@ -71,7 +72,8 @@ const dashboardWidgets = asyncHandler(async (req, res) => {
       {
         $match: {
           projectId: { $in: projectIds },
-          status: { $in: ['pending'] }
+          status: { $in: ['pending'] },
+          isDeleted: false
         }
       },
       {
