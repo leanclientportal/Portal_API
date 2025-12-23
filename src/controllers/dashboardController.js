@@ -7,6 +7,7 @@ const TenantClientMapping = require('../models/TenantClientMapping');
 const asyncHandler = require('../middlewares/asyncHandler');
 const sendResponse = require('../utils/apiResponse');
 const config = require('../config');
+const Tenant = require('../models/Tenant');
 
 // @desc    Get dashboard widgets
 // @route   GET /api/v1/dashboard/:activeProfileId/:activeProfile
@@ -16,7 +17,7 @@ const dashboardWidgets = asyncHandler(async (req, res) => {
   let tenantId;
   let clientId;
 
-  const widgets = {};
+  let widgets = {};
 
   if (activeProfile === config.Tenant) {
     tenantId = activeProfileId;
@@ -101,6 +102,7 @@ const dashboardOverview = asyncHandler(async (req, res) => {
   const { activeProfileId, activeProfile } = req.params;
   let tenantId;
   let clientId;
+  let overview;
 
   if (activeProfile === config.Tenant) {
     tenantId = activeProfileId;
@@ -123,7 +125,7 @@ const dashboardOverview = asyncHandler(async (req, res) => {
 
     const latestInvoices = await Invoice.find({ projectId: { $in: projectIds }, isDeleted: false }).sort({ createdAt: -1 }).limit(5);
 
-    const overview = {
+    overview = {
       topClients,
       topProjects,
       latestTasks,
@@ -132,7 +134,8 @@ const dashboardOverview = asyncHandler(async (req, res) => {
     };
 
   } else if (activeProfile === config.Client) {
-    const tenantMappings = await TenantClientMapping.find({ clientId: activeProfileId }).select('tenantId');
+    clientId = activeProfileId;
+    const tenantMappings = await TenantClientMapping.find({ clientId }).select('tenantId');
     const mapTenantIds = tenantMappings.map(mapping => mapping.tenantId);
 
     const topTenants = await Tenant.find({ _id: { $in: mapTenantIds }, isActive: true }).sort({ lastActivityDate: -1 }).limit(5);
@@ -151,7 +154,7 @@ const dashboardOverview = asyncHandler(async (req, res) => {
 
     const latestInvoices = await Invoice.find({ projectId: { $in: projectIds }, isDeleted: false }).sort({ createdAt: -1 }).limit(5);
 
-    const overview = {
+    overview = {
       topTenants,
       topProjects,
       latestTasks,
@@ -160,7 +163,7 @@ const dashboardOverview = asyncHandler(async (req, res) => {
     };
   }
 
-  if (!tenantId) {
+  if (!overview) {
     return sendResponse(res, 400, 'Invalid profile or ID');
   }
 
