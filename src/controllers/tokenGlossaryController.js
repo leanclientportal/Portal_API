@@ -8,5 +8,5 @@ const APIResponse = require('../utils/apiResponse');
 exports.getTokenGlossary = asyncHandler(async (req, res, next) => {
     const tokenGlossary = await TokenGlossary.find();
 
-    res.status(200).json(new APIResponse(tokenGlossary));
+    sendResponse(res, 200, 'Token Glossary retrieved successfully', { tokenGlossary });
 });
