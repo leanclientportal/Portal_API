@@ -97,8 +97,10 @@ const createProject = asyncHandler(async (req, res) => {
     const client = await Client.findById(clientId);
     const tenant = await Tenant.findById(tenantId);
     if (client && tenant && tenant.emailSetting && tenant.emailSetting.newProject) {
-      await sendNewProjectEmail(client, tenant, project);
+      await sendNewProjectEmail(tenant, client, project);
+      console.error(`project under`);
     }
+    console.error(`Failed to send new project email`);
   } catch (emailError) {
     console.error(`Failed to send new project email for project ${project._id}:`, emailError);
   }

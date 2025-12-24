@@ -118,7 +118,7 @@ const sendNewProjectEmail = async (tenant, client, project) => {
         console.warn(`Warning: '${EmailTemplateType.NEW_PROJECT.code}' email template not found for tenant ${tenant._id}. Using default email content.`);
         subject = `New Project Created: ${tokenData.project.name}`;
         html = `<p>Hello,</p><p>A new project has been created:</p><p><b>Project Name:</b> ${tokenData.project.name}</p><p><b>Client:</b> ${tokenData.client.name}</p>`;
-        text = `Hello,\n\nA new project has been created:\n\nProject Name: ${tokenData.project.name}\nClient: ${tokenData.project.clientName}`;
+        text = `Hello,\n\nA new project has been created:\n\nProject Name: ${tokenData.project.name}\nClient: ${tokenData.client.name}`;
     }
 
     try {
