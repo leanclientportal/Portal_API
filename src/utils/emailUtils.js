@@ -115,14 +115,14 @@ const sendNewProjectEmail = async (tenant, client, project) => {
         html = replaceTokens(emailTemplate.body, tokenData);
         text = html.replace(/<[^>]*>?/gm, '');
     } else {
-        console.warn(`Warning: '${EmailTemplateType.NEW_PROJECT.code}' email template not found for tenant ${tenantId}. Using default email content.`);
+        console.warn(`Warning: '${EmailTemplateType.NEW_PROJECT.code}' email template not found for tenant ${tenant._id}. Using default email content.`);
         subject = `New Project Created: ${tokenData.project.name}`;
-        html = `<p>Hello,</p><p>A new project has been created:</p><p><b>Project Name:</b> ${tokenData.project.name}</p><p><b>Client:</b> ${tokenData.project.clientName}</p>`;
+        html = `<p>Hello,</p><p>A new project has been created:</p><p><b>Project Name:</b> ${tokenData.project.name}</p><p><b>Client:</b> ${tokenData.client.name}</p>`;
         text = `Hello,\n\nA new project has been created:\n\nProject Name: ${tokenData.project.name}\nClient: ${tokenData.project.clientName}`;
     }
 
     try {
-        await sendEmail(tenantId, recipientEmail, subject, text, html);
+        await sendEmail(tenant._id, client.email, subject, text, html);
     } catch (error) {
         console.error('Error sending new project email:', error);
         throw new Error('Failed to send new project email.');
