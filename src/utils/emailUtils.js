@@ -10,7 +10,7 @@ const getEmailTemplate = async (tenantId, templateId) => {
 
     if (!emailTemplate) {
         console.warn(`Warning: Email template with templateId '${templateId}' not found for tenant ${tenantId}.`);
-        return null;
+        emailTemplate = await EmailTemplate.findOne({ tenantId: null, templateId, isActive: true });
     }
 
     return emailTemplate;
@@ -18,18 +18,19 @@ const getEmailTemplate = async (tenantId, templateId) => {
 
 const sendRegistrationEmail = async (tenantId, name, email, invitationToken) => {
     const invitationLink = `${config.FrontEnd_Base_Url}/verify-invitation?token=${invitationToken}`;
-
     const emailTemplate = await getEmailTemplate(tenantId, EmailTemplateType.REGISTRATION.code);
+    const tokenData = await getTokenData({ tenantId, clientId });
+    tokenData.invitation = {
+        link: invitationLink,
+    };
 
     let subject;
     let html;
     let text;
 
     if (emailTemplate) {
-        subject = emailTemplate.subject;
-        html = emailTemplate.body
-            .replace(/{{name}}/g, name)
-            .replace(/{{link}}/g, invitationLink);
+        subject = replaceTokens(emailTemplate.subject, tokenData);
+        html = replaceTokens(emailTemplate.body, tokenData);
         text = html.replace(/<[^>]*>?/gm, '');
     } else {
         console.warn(`Warning: '${EmailTemplateType.REGISTRATION.code}' email template not found for tenant ${tenantId}. Using default email content.`);
@@ -46,26 +47,27 @@ const sendRegistrationEmail = async (tenantId, name, email, invitationToken) => 
     }
 };
 
-const sendInvitationEmail = async (tenantId, name, email, invitationToken) => {
+const sendInvitationEmail = async (tenantId, clientId, email, invitationToken) => {
     const invitationLink = `${config.FrontEnd_Base_Url}/verify-invitation?token=${invitationToken}`;
-
     const emailTemplate = await getEmailTemplate(tenantId, EmailTemplateType.INVITATION.code);
+    const tokenData = await getTokenData({ tenantId, clientId });
+    tokenData.invitation = {
+        link: invitationLink,
+    };
 
     let subject;
     let html;
     let text;
 
     if (emailTemplate) {
-        subject = emailTemplate.subject;
-        html = emailTemplate.body
-            .replace(/{{name}}/g, name)
-            .replace(/{{link}}/g, invitationLink);
+        subject = replaceTokens(emailTemplate.subject, tokenData);
+        html = replaceTokens(emailTemplate.body, tokenData);
         text = html.replace(/<[^>]*>?/gm, '');
     } else {
         console.warn(`Warning: '${EmailTemplateType.INVITATION.code}' email template not found for tenant ${tenantId}. Using default email content.`);
         subject = 'You have been invited to the Lean Client Portal';
-        text = `Hello ${name},\n\nYou have been invited to the Lean Client Portal. Please click the following link to set up your account:\n\n${invitationLink}`;
-        html = `<p>Hello ${name},</p><p>You have been invited to the Lean Client Portal. Please click the button below to set up your account:</p><a href="${invitationLink}">Set Up Account</a>`;
+        text = `Hello ,\n\nYou have been invited to the Lean Client Portal. Please click the following link to set up your account:\n\n${invitationLink}`;
+        html = `<p>Hello ,</p><p>You have been invited to the Lean Client Portal. Please click the button below to set up your account:</p><a href="${invitationLink}">Set Up Account</a>`;
     }
 
     try {
@@ -76,22 +78,24 @@ const sendInvitationEmail = async (tenantId, name, email, invitationToken) => {
     }
 };
 
-const sendLoginOtpEmail = async (tenantId, recipientEmail, otpDetails) => {
+const sendLoginOtpEmail = async (tenantId, recipientEmail, otp) => {
     const emailTemplate = await getEmailTemplate(tenantId, EmailTemplateType.LOGIN_OTP.code);
+    const tokenData = await getTokenData({ tenantId });
+    tokenData.system = { otp: otp };
 
     let subject;
     let html;
     let text;
 
     if (emailTemplate) {
-        subject = emailTemplate.subject;
-        html = emailTemplate.body.replace(/{{otp}}/g, otpDetails.otp);
+        subject = replaceTokens(emailTemplate.subject, tokenData);
+        html = replaceTokens(emailTemplate.body, tokenData);
         text = html.replace(/<[^>]*>?/gm, '');
     } else {
         console.warn(`Warning: '${EmailTemplateType.LOGIN_OTP.code}' email template not found for tenant ${tenantId}. Using default email content.`);
         subject = 'Your One-Time Password (OTP)';
-        html = `<p>Your OTP is: <strong>${otpDetails.otp}</strong></p>`;
-        text = `Your OTP is: ${otpDetails.otp}`;
+        html = `<p>Your OTP is: <strong>${otp}</strong></p>`;
+        text = `Your OTP is: ${otp}`;
     }
 
     try {
@@ -129,24 +133,23 @@ const sendNewProjectEmail = async (tenant, client, project) => {
     }
 };
 
-const sendProjectStatusChangeEmail = async (tenantId, recipientEmail, projectDetails) => {
+const sendProjectStatusChangeEmail = async (tenantId, clientId, recipientEmail, projectId) => {
     const emailTemplate = await getEmailTemplate(tenantId, EmailTemplateType.PROJECT_STATUS_CHANGE.code);
+    const tokenData = await getTokenData({ tenantId, clientId, projectId });
 
     let subject;
     let html;
     let text;
 
     if (emailTemplate) {
-        subject = emailTemplate.subject.replace(/{{projectName}}/g, projectDetails.name);
-        html = emailTemplate.body
-            .replace(/{{projectName}}/g, projectDetails.name)
-            .replace(/{{status}}/g, projectDetails.status);
+        subject = replaceTokens(emailTemplate.subject, tokenData);
+        html = replaceTokens(emailTemplate.body, tokenData);
         text = html.replace(/<[^>]*>?/gm, '');
     } else {
         console.warn(`Warning: '${EmailTemplateType.PROJECT_STATUS_CHANGE.code}' email template not found for tenant ${tenantId}. Using default email content.`);
-        subject = `Project Status Updated: ${projectDetails.name}`;
-        html = `<p>The status of project <strong>${projectDetails.name}</strong> has been updated to <strong>${projectDetails.status}</strong>.</p>`;
-        text = `The status of project ${projectDetails.name} has been updated to ${projectDetails.status}.`;
+        subject = `Project Status Updated: ${tokenData.project.name}`;
+        html = `<p>The status of project <strong>${tokenData.project.name}</strong> has been updated to <strong>${tokenData.project.status}</strong>.</p>`;
+        text = `The status of project ${tokenData.project.name} has been updated to ${tokenData.project.status}.`;
     }
 
     try {
@@ -157,24 +160,23 @@ const sendProjectStatusChangeEmail = async (tenantId, recipientEmail, projectDet
     }
 };
 
-const sendNewTaskEmail = async (tenantId, recipientEmail, taskDetails) => {
+const sendNewTaskEmail = async (tenantId, clientId, projectId, recipientEmail, taskId) => {
     const emailTemplate = await getEmailTemplate(tenantId, EmailTemplateType.NEW_TASK.code);
+    const tokenData = await getTokenData({ tenantId, clientId, projectId, taskId });
 
     let subject;
     let html;
     let text;
 
     if (emailTemplate) {
-        subject = emailTemplate.subject.replace(/{{taskName}}/g, taskDetails.name);
-        html = emailTemplate.body
-            .replace(/{{taskName}}/g, taskDetails.name)
-            .replace(/{{projectName}}/g, taskDetails.projectName);
+        subject = replaceTokens(emailTemplate.subject, tokenData);
+        html = replaceTokens(emailTemplate.body, tokenData);
         text = html.replace(/<[^>]*>?/gm, '');
     } else {
         console.warn(`Warning: '${EmailTemplateType.NEW_TASK.code}' email template not found for tenant ${tenantId}. Using default email content.`);
-        subject = `New Task Assigned: ${taskDetails.name}`;
-        html = `<p>A new task, <strong>${taskDetails.name}</strong>, has been assigned to you in the project <strong>${taskDetails.projectName}</strong>.</p>`;
-        text = `A new task, ${taskDetails.name}, has been assigned to you in the project ${taskDetails.projectName}.`;
+        subject = `New Task Assigned: ${tokenData.task.name}`;
+        html = `<p>A new task, <strong>${tokenData.task.name}</strong>, has been assigned to you in the project <strong>${tokenData.project.name}</strong>.</p>`;
+        text = `A new task, ${tokenData.task.name}, has been assigned to you in the project ${tokenData.project.name}.`;
     }
 
     try {
@@ -185,24 +187,23 @@ const sendNewTaskEmail = async (tenantId, recipientEmail, taskDetails) => {
     }
 };
 
-const sendTaskUpdateEmail = async (tenantId, recipientEmail, taskDetails) => {
+const sendTaskUpdateEmail = async (tenantId, clientId, projectId, recipientEmail, taskId) => {
     const emailTemplate = await getEmailTemplate(tenantId, EmailTemplateType.TASK_UPDATE.code);
+    const tokenData = await getTokenData({ tenantId, clientId, projectId, taskId });
 
     let subject;
     let html;
     let text;
 
     if (emailTemplate) {
-        subject = emailTemplate.subject.replace(/{{taskName}}/g, taskDetails.name);
-        html = emailTemplate.body
-            .replace(/{{taskName}}/g, taskDetails.name)
-            .replace(/{{status}}/g, taskDetails.status);
+        subject = replaceTokens(emailTemplate.subject, tokenData);
+        html = replaceTokens(emailTemplate.body, tokenData);
         text = html.replace(/<[^>]*>?/gm, '');
     } else {
         console.warn(`Warning: '${EmailTemplateType.TASK_UPDATE.code}' email template not found for tenant ${tenantId}. Using default email content.`);
-        subject = `Task Status Updated: ${taskDetails.name}`;
-        html = `<p>The status of task <strong>${taskDetails.name}</strong> has been updated to <strong>${taskDetails.status}</strong>.</p>`;
-        text = `The status of task ${taskDetails.name} has been updated to ${taskDetails.status}.`;
+        subject = `Task Status Updated: ${tokenData.task.name}`;
+        html = `<p>The status of task <strong>${tokenData.task.name}</strong> has been updated to <strong>${tokenData.task.status}</strong>.</p>`;
+        text = `The status of task ${tokenData.task.name} has been updated to ${tokenData.task.status}.`;
     }
 
     try {
@@ -213,24 +214,23 @@ const sendTaskUpdateEmail = async (tenantId, recipientEmail, taskDetails) => {
     }
 };
 
-const sendDocumentUploadEmail = async (tenantId, recipientEmail, documentDetails) => {
+const sendDocumentUploadEmail = async (tenantId, clientId, projectId, recipientEmail, documentId) => {
     const emailTemplate = await getEmailTemplate(tenantId, EmailTemplateType.DOCUMENT_UPLOAD.code);
+    const tokenData = await getTokenData({ tenantId, clientId, projectId, documentId });
 
     let subject;
     let html;
     let text;
 
     if (emailTemplate) {
-        subject = emailTemplate.subject.replace(/{{documentName}}/g, documentDetails.name);
-        html = emailTemplate.body
-            .replace(/{{documentName}}/g, documentDetails.name)
-            .replace(/{{projectName}}/g, documentDetails.projectName);
+        subject = replaceTokens(emailTemplate.subject, tokenData);
+        html = replaceTokens(emailTemplate.body, tokenData);
         text = html.replace(/<[^>]*>?/gm, '');
     } else {
         console.warn(`Warning: '${EmailTemplateType.DOCUMENT_UPLOAD.code}' email template not found for tenant ${tenantId}. Using default email content.`);
-        subject = `New Document Uploaded: ${documentDetails.name}`;
-        html = `<p>A new document, <strong>${documentDetails.name}</strong>, has been uploaded to the project <strong>${documentDetails.projectName}</strong>.</p>`;
-        text = `A new document, ${documentDetails.name}, has been uploaded to the project ${documentDetails.projectName}.`;
+        subject = `New Document Uploaded: ${tokenData.document.name}`;
+        html = `<p>A new document, <strong>${tokenData.document.name}</strong>, has been uploaded to the project <strong>${tokenData.project.name}</strong>.</p>`;
+        text = `A new document, ${tokenData.document.name}, has been uploaded to the project ${tokenData.project.name}.`;
     }
 
     try {
@@ -241,24 +241,23 @@ const sendDocumentUploadEmail = async (tenantId, recipientEmail, documentDetails
     }
 };
 
-const sendInvoiceUploadEmail = async (tenantId, recipientEmail, invoiceDetails, attachments) => {
+const sendInvoiceUploadEmail = async (tenantId, clientId, projectId, recipientEmail, invoiceId, attachments) => {
     const emailTemplate = await getEmailTemplate(tenantId, EmailTemplateType.INVOICE_UPLOAD.code);
+    const tokenData = await getTokenData({ tenantId, clientId, projectId, invoiceId });
 
     let subject;
     let html;
     let text;
 
     if (emailTemplate) {
-        subject = emailTemplate.subject.replace(/{{invoiceNumber}}/g, invoiceDetails.number);
-        html = emailTemplate.body
-            .replace(/{{invoiceNumber}}/g, invoiceDetails.number)
-            .replace(/{{amount}}/g, invoiceDetails.amount);
+        subject = replaceTokens(emailTemplate.subject, tokenData);
+        html = replaceTokens(emailTemplate.body, tokenData);
         text = html.replace(/<[^>]*>?/gm, '');
     } else {
         console.warn(`Warning: '${EmailTemplateType.INVOICE_UPLOAD.code}' email template not found for tenant ${tenantId}. Using default email content.`);
-        subject = `New Invoice: ${invoiceDetails.number}`;
-        html = `<p>A new invoice (<strong>${invoiceDetails.number}</strong>) for the amount of <strong>${invoiceDetails.amount}</strong> is available.</p>`;
-        text = `A new invoice (${invoiceDetails.number}) for the amount of ${invoiceDetails.amount} is available.`;
+        subject = `New Invoice: ${tokenData.invoice.title}`;
+        html = `<p>A new invoice (<strong>${tokenData.invoice.title}</strong>) for the amount of <strong>${tokenData.invoice.amount}</strong> is available.</p>`;
+        text = `A new invoice (${tokenData.invoice.title}) for the amount of ${tokenData.invoice.amount} is available.`;
     }
 
     try {
@@ -269,24 +268,23 @@ const sendInvoiceUploadEmail = async (tenantId, recipientEmail, invoiceDetails, 
     }
 };
 
-const sendInvoicePaidEmail = async (tenantId, recipientEmail, invoiceDetails, attachments) => {
+const sendInvoicePaidEmail = async (tenantId, clientId, projectId, recipientEmail, invoiceId, attachments) => {
     const emailTemplate = await getEmailTemplate(tenantId, EmailTemplateType.INVOICE_PAID.code);
+    const tokenData = await getTokenData({ tenantId, clientId, projectId, invoiceId });
 
     let subject;
     let html;
     let text;
 
     if (emailTemplate) {
-        subject = emailTemplate.subject.replace(/{{invoiceNumber}}/g, invoiceDetails.number);
-        html = emailTemplate.body
-            .replace(/{{invoiceNumber}}/g, invoiceDetails.number)
-            .replace(/{{amount}}/g, invoiceDetails.amount);
+        subject = replaceTokens(emailTemplate.subject, tokenData);
+        html = replaceTokens(emailTemplate.body, tokenData);
         text = html.replace(/<[^>]*>?/gm, '');
     } else {
         console.warn(`Warning: '${EmailTemplateType.INVOICE_PAID.code}' email template not found for tenant ${tenantId}. Using default email content.`);
-        subject = `Invoice Paid: ${invoiceDetails.number}`;
-        html = `<p>Thank you for your payment. Invoice <strong>${invoiceDetails.number}</strong> for the amount of <strong>${invoiceDetails.amount}</strong> has been paid.</p>`;
-        text = `Thank you for your payment. Invoice ${invoiceDetails.number} for the amount of ${invoiceDetails.amount} has been paid.`;
+        subject = `Invoice Paid: ${tokenData.invoice.title}`;
+        html = `<p>Thank you for your payment. Invoice <strong>${tokenData.invoice.title}</strong> for the amount of <strong>${tokenData.invoice.amount}</strong> has been paid.</p>`;
+        text = `Thank you for your payment. Invoice ${tokenData.invoice.title} for the amount of ${tokenData.invoice.amount} has been paid.`;
     }
 
     try {

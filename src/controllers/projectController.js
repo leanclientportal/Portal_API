@@ -161,7 +161,7 @@ const updateProject = asyncHandler(async (req, res) => {
       const client = await Client.findById(project.clientId);
       const tenant = await Tenant.findById(project.tenantId);
       if (client && tenant && tenant.emailSetting && tenant.emailSetting.projectStatusChange) {
-        await sendProjectStatusChangeEmail(project.tenantId, client.email, { name: project.name, status: newStatus });
+        await sendProjectStatusChangeEmail(project.tenantId, project.clientId, client.email, projectId);
       }
     } catch (emailError) {
       console.error(`Failed to send project status change email for project ${project._id}:`, emailError);

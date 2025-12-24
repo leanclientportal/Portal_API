@@ -68,10 +68,10 @@ const createTask = asyncHandler(async (req, res) => {
     const project = await Project.findById(projectId).populate('clientId');
     const tenant = await Tenant.findById(project.tenantId);
     if (project && project.clientId && tenant && tenant.emailSetting && tenant.emailSetting.newTask) {
-        await sendNewTaskEmail(project.tenantId, project.clientId.email, { name: task.title, projectName: project.name });
+      await sendNewTaskEmail(project.tenantId, project.clientId._id, projectId, project.clientId.email, task._id);
     }
   } catch (emailError) {
-      console.error(`Failed to send new task email for task ${task._id}:`, emailError);
+    console.error(`Failed to send new task email for task ${task._id}:`, emailError);
   }
 
   sendResponse(res, 201, 'Task created successfully', task);
@@ -85,7 +85,7 @@ const updateTask = asyncHandler(async (req, res) => {
 
   const taskBeforeUpdate = await Task.findById(taskId);
   if (!taskBeforeUpdate) {
-      return sendResponse(res, 404, 'Task not found', null, false);
+    return sendResponse(res, 404, 'Task not found', null, false);
   }
   const oldStatus = taskBeforeUpdate.status;
 
@@ -107,13 +107,13 @@ const updateTask = asyncHandler(async (req, res) => {
   const newStatus = task.status;
   if (oldStatus !== newStatus) {
     try {
-        const project = await Project.findById(projectId).populate('clientId');
-        const tenant = await Tenant.findById(project.tenantId);
-        if (project && project.clientId && tenant && tenant.emailSetting && tenant.emailSetting.taskUpdate) {
-            await sendTaskUpdateEmail(project.tenantId, project.clientId.email, { name: task.title, status: newStatus });
-        }
+      const project = await Project.findById(projectId).populate('clientId');
+      const tenant = await Tenant.findById(project.tenantId);
+      if (project && project.clientId && tenant && tenant.emailSetting && tenant.emailSetting.taskUpdate) {
+        await sendTaskUpdateEmail(project.tenantId, project.clientId._id, projectId, project.clientId.email, taskId);
+      }
     } catch (emailError) {
-        console.error(`Failed to send task update email for task ${task._id}:`, emailError);
+      console.error(`Failed to send task update email for task ${task._id}:`, emailError);
     }
   }
 

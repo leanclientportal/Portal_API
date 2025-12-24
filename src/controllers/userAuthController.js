@@ -61,7 +61,7 @@ const sendOtp = asyncHandler(async (req, res) => {
     }
 
     // Use the utility function to send the OTP email
-    await sendLoginOtpEmail(tenantId, email, { otp });
+    await sendLoginOtpEmail(tenantId, email, otp );
 
   } catch (error) {
     console.error('Error sending OTP email:', error);

@@ -64,11 +64,11 @@ const createInvoice = asyncHandler(async (req, res) => {
   try {
     const tenant = await Tenant.findById(project.tenantId);
     if (project.clientId && tenant && tenant.emailSetting && tenant.emailSetting.invoiceUpload) {
-        const attachments = invoice.invoiceUrl ? [{ path: invoice.invoiceUrl }] : [];
-        await sendInvoiceUploadEmail(project.tenantId, project.clientId.email, { number: invoice.title, amount: invoice.amount }, attachments);
+      const attachments = invoice.invoiceUrl ? [{ path: invoice.invoiceUrl }] : [];
+      await sendInvoiceUploadEmail(project.tenantId, project.clientId._id, projectId, project.clientId.email, invoice._id, attachments);
     }
   } catch (emailError) {
-      console.error(`Failed to send invoice upload email for invoice ${invoice._id}:`, emailError);
+    console.error(`Failed to send invoice upload email for invoice ${invoice._id}:`, emailError);
   }
 
   sendResponse(res, 201, 'Invoice created successfully', invoice);
@@ -138,9 +138,9 @@ const deleteInvoice = asyncHandler(async (req, res) => {
 const markAsPaid = asyncHandler(async (req, res) => {
   const { projectId, invoiceId } = req.params;
 
-  const invoice = await Invoice.findOne({ _id: invoiceId, projectId }).populate({ 
-      path: 'projectId',
-      populate: { path: 'clientId' }
+  const invoice = await Invoice.findOne({ _id: invoiceId, projectId }).populate({
+    path: 'projectId',
+    populate: { path: 'clientId' }
   });
 
   if (!invoice) {
@@ -158,11 +158,11 @@ const markAsPaid = asyncHandler(async (req, res) => {
   try {
     const tenant = await Tenant.findById(invoice.projectId.tenantId);
     if (invoice.projectId.clientId && tenant && tenant.emailSetting && tenant.emailSetting.invoicePaid) {
-        const attachments = invoice.invoiceUrl ? [{ path: invoice.invoiceUrl }] : [];
-        await sendInvoicePaidEmail(invoice.projectId.tenantId, invoice.projectId.clientId.email, { number: invoice.title, amount: invoice.amount }, attachments);
+      const attachments = invoice.invoiceUrl ? [{ path: invoice.invoiceUrl }] : [];
+      await sendInvoicePaidEmail(invoice.projectId.tenantId, invoice.projectId.clientId._id, projectId, invoice.projectId.clientId.email, invoiceId, attachments);
     }
   } catch (emailError) {
-      console.error(`Failed to send invoice paid email for invoice ${invoice._id}:`, emailError);
+    console.error(`Failed to send invoice paid email for invoice ${invoice._id}:`, emailError);
   }
 
   sendResponse(res, 200, 'Invoice marked as paid successfully', invoice);

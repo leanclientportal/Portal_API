@@ -145,7 +145,7 @@ const createClient = asyncHandler(async (req, res) => {
       role: 'client',
     });
 
-    await sendInvitationEmail(tenantId, name, email, invitationToken);
+    await sendInvitationEmail(tenantId, client._id, email, invitationToken);
 
   } else {
     await UserTenantClientMapping.create({
@@ -223,7 +223,7 @@ const resendInvitation = asyncHandler(async (req, res) => {
   client.invitationToken = invitationToken;
   await client.save();
 
-  await sendInvitationEmail(tenantId, client.name, client.email, invitationToken);
+  await sendInvitationEmail(tenantId, clientId, client.email, invitationToken);
 
   sendResponse(res, 200, 'Invitation resent successfully.', {});
 });

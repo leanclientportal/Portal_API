@@ -89,10 +89,10 @@ const uploadDocument = asyncHandler(async (req, res) => {
   try {
     const tenant = await Tenant.findById(project.tenantId);
     if (project.clientId && tenant && tenant.emailSetting && tenant.emailSetting.documentUpload) {
-        await sendDocumentUploadEmail(project.tenantId, project.clientId.email, { name: document.name, projectName: project.name });
+      await sendDocumentUploadEmail(project.tenantId, project.clientId._id, projectId, project.clientId.email, document._id);
     }
   } catch (emailError) {
-      console.error(`Failed to send document upload email for document ${document._id}:`, emailError);
+    console.error(`Failed to send document upload email for document ${document._id}:`, emailError);
   }
 
 
@@ -107,7 +107,7 @@ const updateDocument = asyncHandler(async (req, res) => {
   const { name, docUrl, uploadedBy, uploaderId, isOverwrite } = req.body;
 
   const document = await Document.findOneAndUpdate(
-    { _id: documentId, projectId }, 
+    { _id: documentId, projectId },
     { name, docUrl, uploadedBy, uploaderId, isOverwrite },
     { new: true, runValidators: true }
   );

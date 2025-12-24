@@ -24,6 +24,7 @@ const tenantSettingsRoutes = require('./routes/tenantSettingsRoutes');
 const messageRoutes = require('./routes/messageRoutes');
 const chatRoutes = require('./routes/chatRoutes');
 const dashboardRoutes = require('./routes/dashboardRoutes');
+const tokenGlossaryRoutes = require('./routes/tokenGlossaryRoutes');
 
 // Swagger documentation
 const { swaggerUi, specs } = require('./config/swagger');
@@ -115,6 +116,7 @@ app.use(`${API_VERSION}/email-templates`, emailTemplateRoutes); // Added email t
 app.use(`${API_VERSION}/messages`, messageRoutes);
 app.use(`${API_VERSION}/chats`, chatRoutes);
 app.use(`${API_VERSION}/dashboard`, dashboardRoutes);
+app.use(`${API_VERSION}/token-glossary`, tokenGlossaryRoutes);
 
 // Welcome message
 app.get('/', (req, res) => {
@@ -131,7 +133,8 @@ app.get('/', (req, res) => {
       tasks: `${API_VERSION}/tasks/:tenantId/:clientId/:projectId`,
       invoices: `${API_VERSION}/invoices/:tenantId/:clientId/:projectId`,
       documents: `${API_VERSION}/documents/:clientId/:projectId`,
-      emailTemplates: `${API_VERSION}/email-templates` // Added email templates endpoint
+      emailTemplates: `${API_VERSION}/email-templates`, // Added email templates endpoint
+      tokenGlossary: `${API_VERSION}/token-glossary`
     }
   });
 });
@@ -155,7 +158,8 @@ app.all('*', (req, res) => {
       `GET ${API_VERSION}/tasks/:tenantId/:clientId/:projectId`,
       `GET ${API_VERSION}/invoices/:tenantId/:clientId/:projectId`,
       `GET ${API_VERSION}/documents/:clientId/:projectId`,
-      `GET ${API_VERSION}/email-templates` // Added email templates endpoint
+      `GET ${API_VERSION}/email-templates`, // Added email templates endpoint
+      `GET ${API_VERSION}/token-glossary`
     ]
   });
 });
