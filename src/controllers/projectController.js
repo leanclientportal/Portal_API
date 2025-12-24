@@ -97,10 +97,10 @@ const createProject = asyncHandler(async (req, res) => {
     const client = await Client.findById(clientId);
     const tenant = await Tenant.findById(tenantId);
     if (client && tenant && tenant.emailSetting && tenant.emailSetting.newProject) {
-        await sendNewProjectEmail(tenantId, client.email, { name: project.name, clientName: client.name });
+      await sendNewProjectEmail(client, tenant, project);
     }
   } catch (emailError) {
-      console.error(`Failed to send new project email for project ${project._id}:`, emailError);
+    console.error(`Failed to send new project email for project ${project._id}:`, emailError);
   }
 
   sendResponse(res, 201, 'Project created successfully', project);
@@ -128,7 +128,7 @@ const getProject = asyncHandler(async (req, res) => {
 // @access  Private
 const updateProject = asyncHandler(async (req, res) => {
   const { projectId } = req.params;
-  
+
   const projectBeforeUpdate = await Project.findById(projectId);
   if (!projectBeforeUpdate) {
     return sendResponse(res, 404, 'Project not found', null, false);
@@ -155,15 +155,15 @@ const updateProject = asyncHandler(async (req, res) => {
 
   const newStatus = project.status;
   if (oldStatus !== newStatus) {
-      try {
-        const client = await Client.findById(project.clientId);
-        const tenant = await Tenant.findById(project.tenantId);
-        if (client && tenant && tenant.emailSetting && tenant.emailSetting.projectStatusChange) {
-            await sendProjectStatusChangeEmail(project.tenantId, client.email, { name: project.name, status: newStatus });
-        }
-      } catch (emailError) {
-          console.error(`Failed to send project status change email for project ${project._id}:`, emailError);
+    try {
+      const client = await Client.findById(project.clientId);
+      const tenant = await Tenant.findById(project.tenantId);
+      if (client && tenant && tenant.emailSetting && tenant.emailSetting.projectStatusChange) {
+        await sendProjectStatusChangeEmail(project.tenantId, client.email, { name: project.name, status: newStatus });
       }
+    } catch (emailError) {
+      console.error(`Failed to send project status change email for project ${project._id}:`, emailError);
+    }
   }
 
   sendResponse(res, 200, 'Project updated successfully', project);

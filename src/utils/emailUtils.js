@@ -2,16 +2,18 @@ const EmailTemplate = require('../models/EmailTemplate');
 const { sendEmail } = require('../services/emailService');
 const config = require('../config');
 const EmailTemplateType = require('../enums/EmailTemplateType');
+const { getTokenData } = require('../services/tokenService');
+const { replaceTokens } = require('./replaceTokens');
 
 const getEmailTemplate = async (tenantId, templateId) => {
-  const emailTemplate = await EmailTemplate.findOne({ tenantId, templateId, isActive: true });
+    const emailTemplate = await EmailTemplate.findOne({ tenantId, templateId, isActive: true });
 
-  if (!emailTemplate) {
-    console.warn(`Warning: Email template with templateId '${templateId}' not found for tenant ${tenantId}.`);
-    return null;
-  }
+    if (!emailTemplate) {
+        console.warn(`Warning: Email template with templateId '${templateId}' not found for tenant ${tenantId}.`);
+        return null;
+    }
 
-  return emailTemplate;
+    return emailTemplate;
 };
 
 const sendRegistrationEmail = async (tenantId, name, email, invitationToken) => {
@@ -24,23 +26,23 @@ const sendRegistrationEmail = async (tenantId, name, email, invitationToken) => 
     let text;
 
     if (emailTemplate) {
-      subject = emailTemplate.subject;
-      html = emailTemplate.body
-        .replace(/{{name}}/g, name)
-        .replace(/{{link}}/g, invitationLink);
-      text = html.replace(/<[^>]*>?/gm, '');
+        subject = emailTemplate.subject;
+        html = emailTemplate.body
+            .replace(/{{name}}/g, name)
+            .replace(/{{link}}/g, invitationLink);
+        text = html.replace(/<[^>]*>?/gm, '');
     } else {
-      console.warn(`Warning: '${EmailTemplateType.REGISTRATION.code}' email template not found for tenant ${tenantId}. Using default email content.`);
-      subject = 'You have been invited to the Lean Client Portal';
-      text = `Hello ${name},\n\nYou have been invited to the Lean Client Portal. Please click the following link to set up your account:\n\n${invitationLink}`;
-      html = `<p>Hello ${name},</p><p>You have been invited to the Lean Client Portal. Please click the button below to set up your account:</p><a href="${invitationLink}">Set Up Account</a>`;
+        console.warn(`Warning: '${EmailTemplateType.REGISTRATION.code}' email template not found for tenant ${tenantId}. Using default email content.`);
+        subject = 'You have been invited to the Lean Client Portal';
+        text = `Hello ${name},\n\nYou have been invited to the Lean Client Portal. Please click the following link to set up your account:\n\n${invitationLink}`;
+        html = `<p>Hello ${name},</p><p>You have been invited to the Lean Client Portal. Please click the button below to set up your account:</p><a href="${invitationLink}">Set Up Account</a>`;
     }
 
     try {
-      await sendEmail(tenantId, email, subject, text, html);
+        await sendEmail(tenantId, email, subject, text, html);
     } catch (error) {
-      console.error('Error sending registration email:', error);
-      throw new Error('Failed to send registration email.');
+        console.error('Error sending registration email:', error);
+        throw new Error('Failed to send registration email.');
     }
 };
 
@@ -54,23 +56,23 @@ const sendInvitationEmail = async (tenantId, name, email, invitationToken) => {
     let text;
 
     if (emailTemplate) {
-      subject = emailTemplate.subject;
-      html = emailTemplate.body
-        .replace(/{{name}}/g, name)
-        .replace(/{{link}}/g, invitationLink);
-      text = html.replace(/<[^>]*>?/gm, '');
+        subject = emailTemplate.subject;
+        html = emailTemplate.body
+            .replace(/{{name}}/g, name)
+            .replace(/{{link}}/g, invitationLink);
+        text = html.replace(/<[^>]*>?/gm, '');
     } else {
-      console.warn(`Warning: '${EmailTemplateType.INVITATION.code}' email template not found for tenant ${tenantId}. Using default email content.`);
-      subject = 'You have been invited to the Lean Client Portal';
-      text = `Hello ${name},\n\nYou have been invited to the Lean Client Portal. Please click the following link to set up your account:\n\n${invitationLink}`;
-      html = `<p>Hello ${name},</p><p>You have been invited to the Lean Client Portal. Please click the button below to set up your account:</p><a href="${invitationLink}">Set Up Account</a>`;
+        console.warn(`Warning: '${EmailTemplateType.INVITATION.code}' email template not found for tenant ${tenantId}. Using default email content.`);
+        subject = 'You have been invited to the Lean Client Portal';
+        text = `Hello ${name},\n\nYou have been invited to the Lean Client Portal. Please click the following link to set up your account:\n\n${invitationLink}`;
+        html = `<p>Hello ${name},</p><p>You have been invited to the Lean Client Portal. Please click the button below to set up your account:</p><a href="${invitationLink}">Set Up Account</a>`;
     }
 
     try {
-      await sendEmail(tenantId, email, subject, text, html);
+        await sendEmail(tenantId, email, subject, text, html);
     } catch (error) {
-      console.error('Error sending invitation email:', error);
-      throw new Error('Failed to send invitation email.');
+        console.error('Error sending invitation email:', error);
+        throw new Error('Failed to send invitation email.');
     }
 };
 
@@ -100,24 +102,23 @@ const sendLoginOtpEmail = async (tenantId, recipientEmail, otpDetails) => {
     }
 };
 
-const sendNewProjectEmail = async (tenantId, recipientEmail, projectDetails) => {
-    const emailTemplate = await getEmailTemplate(tenantId, EmailTemplateType.NEW_PROJECT.code);
+const sendNewProjectEmail = async (tenant, client, project) => {
+    const emailTemplate = await getEmailTemplate(tenant._id, EmailTemplateType.NEW_PROJECT.code);
+    const tokenData = await getTokenData({ tenantId: tenant._id, clientId: client._id, projectId: project._id });
 
     let subject;
     let html;
     let text;
 
     if (emailTemplate) {
-        subject = emailTemplate.subject.replace(/{{projectName}}/g, projectDetails.name);
-        html = emailTemplate.body
-            .replace(/{{clientName}}/g, projectDetails.clientName)
-            .replace(/{{projectName}}/g, projectDetails.name);
+        subject = replaceTokens(emailTemplate.subject, tokenData);
+        html = replaceTokens(emailTemplate.body, tokenData);
         text = html.replace(/<[^>]*>?/gm, '');
     } else {
         console.warn(`Warning: '${EmailTemplateType.NEW_PROJECT.code}' email template not found for tenant ${tenantId}. Using default email content.`);
-        subject = `New Project Created: ${projectDetails.name}`;
-        html = `<p>Hello,</p><p>A new project has been created:</p><p><b>Project Name:</b> ${projectDetails.name}</p><p><b>Client:</b> ${projectDetails.clientName}</p>`;
-        text = `Hello,\n\nA new project has been created:\n\nProject Name: ${projectDetails.name}\nClient: ${projectDetails.clientName}`;
+        subject = `New Project Created: ${tokenData.project.name}`;
+        html = `<p>Hello,</p><p>A new project has been created:</p><p><b>Project Name:</b> ${tokenData.project.name}</p><p><b>Client:</b> ${tokenData.project.clientName}</p>`;
+        text = `Hello,\n\nA new project has been created:\n\nProject Name: ${tokenData.project.name}\nClient: ${tokenData.project.clientName}`;
     }
 
     try {
@@ -296,7 +297,7 @@ const sendInvoicePaidEmail = async (tenantId, recipientEmail, invoiceDetails, at
     }
 };
 
-module.exports = { 
+module.exports = {
     getEmailTemplate,
     sendRegistrationEmail,
     sendInvitationEmail,
