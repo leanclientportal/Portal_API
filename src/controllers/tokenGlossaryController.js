@@ -1,6 +1,6 @@
 const asyncHandler = require('../middlewares/asyncHandler');
 const TokenGlossary = require('../models/TokenGlossary');
-const APIResponse = require('../utils/apiResponse');
+const sendResponse = require('../utils/apiResponse');
 
 // @desc    Get all token glossary entries
 // @route   GET /api/v1/token-glossary
