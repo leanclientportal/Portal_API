@@ -76,6 +76,23 @@ const tenantSchema = new mongoose.Schema({
         type: Boolean,
         default: true
     }
+  },
+  generalSetting: {
+    currency: {
+      type: String,
+      default: 'USD'
+    },
+    dateFormat: {
+      type: String,
+      default: 'MM/DD/YYYY'
+    },
+    amountFormat: {
+      type: String,
+      default: '0,0.00'
+    },
+    clientLogoUrl: {
+      type: String
+    }
   }
 }, {
   timestamps: true,

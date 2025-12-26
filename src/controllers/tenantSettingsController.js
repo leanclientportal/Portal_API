@@ -91,3 +91,48 @@ exports.updateEmailSettings = asyncHandler(async (req, res) => {
 
   sendResponse(res, 200, 'Email settings updated successfully', updatedTenant.emailSetting);
 });
+
+// @desc    Get general settings for a tenant
+// @route   GET /api/v1/tenant/:tenantId/settings/general
+// @access  Private
+exports.getGeneralSettings = asyncHandler(async (req, res) => {
+  const { tenantId } = req.params;
+
+  const tenant = await Tenant.findById(tenantId).select('generalSetting');
+
+  if (!tenant) {
+    return sendResponse(res, 404, 'Tenant not found', null, false);
+  }
+
+  sendResponse(res, 200, 'General settings retrieved successfully', tenant.generalSetting);
+});
+
+// @desc    Update general settings for a tenant
+// @route   PUT /api/v1/tenant/:tenantId/settings/general
+// @access  Private
+exports.updateGeneralSettings = asyncHandler(async (req, res) => {
+  const { tenantId } = req.params;
+  const generalSetting = req.body;
+
+  const tenant = await Tenant.findById(tenantId);
+
+  if (!tenant) {
+    return sendResponse(res, 404, 'Tenant not found', null, false);
+  }
+
+  if (!generalSetting || Object.keys(generalSetting).length === 0) {
+    return sendResponse(res, 400, 'General settings are required', null, false);
+  }
+
+  const updatedTenant = await Tenant.findByIdAndUpdate(
+    tenantId,
+    { $set: { generalSetting } },
+    { new: true, runValidators: true }
+  );
+
+  if (!updatedTenant) {
+    return sendResponse(res, 404, 'Tenant not found', null, false);
+  }
+
+  sendResponse(res, 200, 'General settings updated successfully', updatedTenant.generalSetting);
+});
