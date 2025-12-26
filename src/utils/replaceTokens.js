@@ -19,8 +19,11 @@ function replaceTokens(template, data) {
         return match;
       }
     }
-    if (typeof value === 'object' && value !== null) {
-        return match;
+    
+    if (value instanceof Date) {
+      return value.toISOString().split('T')[0]; // Format as YYYY-MM-DD
+    } else if (typeof value === 'object' && value !== null) {
+      return String(value); // Convert other objects to string
     }
 
     return value;
