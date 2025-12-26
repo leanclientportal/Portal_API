@@ -90,7 +90,7 @@ const tenantSchema = new mongoose.Schema({
       type: String,
       default: '0,0.00'
     },
-    clientLogoUrl: {
+    logoUrl: {
       type: String
     }
   }
