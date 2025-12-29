@@ -151,6 +151,7 @@ const sendProjectStatusChangeEmail = async (tenantId, clientId, recipientEmail, 
         html = `<p>The status of project <strong>${tokenData.project.name}</strong> has been updated to <strong>${tokenData.project.status}</strong>.</p>`;
         text = `The status of project ${tokenData.project.name} has been updated to ${tokenData.project.status}.`;
     }
+    console.warn(`Warning: '${html}' texttexttext ${text}.`);
 
     try {
         await sendEmail(tenantId, recipientEmail, subject, text, html);
