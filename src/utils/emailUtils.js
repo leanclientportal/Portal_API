@@ -144,7 +144,8 @@ const sendProjectStatusChangeEmail = async (tenantId, clientId, recipientEmail, 
     if (emailTemplate) {
         subject = replaceTokens(emailTemplate.subject, tokenData);
         html = replaceTokens(emailTemplate.body, tokenData);
-        text = html.replace(/<[^>]*>?/gm, '');
+        text = html;
+        // text = html.replace(/<[^>]*>?/gm, '');
     } else {
         console.warn(`Warning: '${EmailTemplateType.PROJECT_STATUS_CHANGE.code}' email template not found for tenant ${tenantId}. Using default email content.`);
         subject = `Project Status Updated: ${tokenData.project.name}`;
