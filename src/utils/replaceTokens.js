@@ -22,17 +22,17 @@ function replaceTokens(template, data) {
 
     if (value == null) return '';
 
-    // Date formatting
+    // Date
     if (value instanceof Date) {
       return value.toISOString().split('T')[0];
     }
 
-    // IMAGE / URL tokens → DO NOT escape
+    // URL (EMAIL SAFE)
     if (typeof value === 'string' && isValidUrl(value)) {
-      return value;
+      return value.replace(/&/g, '&amp;'); // 🔥 CRITICAL FIX
     }
 
-    // Normal text → escape
+    // Normal text
     if (['string', 'number', 'boolean'].includes(typeof value)) {
       return escapeHtml(String(value));
     }
@@ -53,5 +53,6 @@ function escapeHtml(str) {
     .replace(/"/g, '&quot;')
     .replace(/'/g, '&#039;');
 }
+
 
 module.exports = { replaceTokens };
