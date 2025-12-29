@@ -7,27 +7,45 @@
  * @returns {string} The string with placeholders replaced.
  */
 function replaceTokens(template, data) {
-  if (!template) return '';
+  if (!template || typeof template !== 'string') return '';
 
-  return template.replace(/{{\s*([a-zA-Z0-9_.]+)\s*}}/g, (match, key) => {
+  return template.replace(/{{\s*([a-zA-Z0-9_.]+)\s*}}/g, (_, key) => {
     const keys = key.split('.');
     let value = data;
+
     for (const k of keys) {
-      if (value && typeof value === 'object' && k in value) {
-        value = value[k];
-      } else {
-        return match;
+      if (!value || typeof value !== 'object' || !(k in value)) {
+        return '';
       }
-    }
-    
-    if (value instanceof Date) {
-      return value.toISOString().split('T')[0]; // Format as YYYY-MM-DD
-    } else if (typeof value === 'object' && value !== null) {
-      return String(value); // Convert other objects to string
+      value = value[k];
     }
 
-    return value;
+    if (value == null) return '';
+
+    // Date formatting
+    if (value instanceof Date) {
+      return value.toISOString().split('T')[0];
+    }
+
+    // Allow only primitive values
+    if (['string', 'number', 'boolean'].includes(typeof value)) {
+      return escapeHtml(String(value));
+    }
+
+    // Reject objects/arrays
+    return '';
   });
 }
+
+// Prevent XSS / broken HTML
+function escapeHtml(str) {
+  return str
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#039;');
+}
+
 
 module.exports = { replaceTokens };
