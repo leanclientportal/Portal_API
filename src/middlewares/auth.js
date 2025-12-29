@@ -1,6 +1,7 @@
 const asyncHandler = require('./asyncHandler');
 const jwt = require('jsonwebtoken');
 const User = require('../models/User');
+const config = require('../config');
 
 // Protect routes
 exports.protect = asyncHandler(async (req, res, next) => {
@@ -20,8 +21,12 @@ exports.protect = asyncHandler(async (req, res, next) => {
     }
 
     try {
+        // Check if JWT_SECRET is defined, otherwise throw an error
+        if (!config.JWT_SECRET) {
+            throw new Error('JWT_SECRET is not defined in environment variables.');
+        }
         // Verify token
-        const decoded = jwt.verify(token, process.env.JWT_SECRET || 'your-secret-key-change-this');
+        const decoded = jwt.verify(token, config.JWT_SECRET);
 
         req.user = await User.findById(decoded.id);
 
@@ -32,12 +37,6 @@ exports.protect = asyncHandler(async (req, res, next) => {
             });
         }
 
-        if (!req.user.isActive) {
-            return res.status(401).json({
-                success: false,
-                message: 'Account is inactive'
-            });
-        }
         req.userId = decoded.id;
         next();
     } catch (err) {

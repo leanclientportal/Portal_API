@@ -16,6 +16,7 @@ const {
   validationSchemas,
   objectIdSchema
 } = require('../middlewares/validation');
+const { protect } = require('../middlewares/auth');
 const Joi = require('joi');
 
 const router = express.Router();
@@ -33,11 +34,13 @@ const paramSchemaDetail = Joi.object({
 
 router.route('/:tenantId')
   .get(
+    protect,
     validateParams(paramSchemaList),
     validateQuery(validationSchemas.pagination),
     getClients
   )
   .post(
+    protect,
     validateParams(paramSchemaList),
     upload.single('profile'),
     validate(validationSchemas.client.create),
@@ -46,28 +49,33 @@ router.route('/:tenantId')
 
 router.route('/:tenantId/dropdown')
   .get(
+    protect,
     validateParams(paramSchemaList),
     getClientListForDropdown
   );
 
 router.route('/:tenantId/:clientId') // Modified route to include tenantId
   .get(
+    protect,
     validateParams(Joi.object({ tenantId: objectIdSchema.required(), clientId: objectIdSchema.required() })),
     getClientById
   )
   .put(
+    protect,
     validateParams(Joi.object({ tenantId: objectIdSchema.required(), clientId: objectIdSchema.required() })),
     upload.single('profile'),
     validate(validationSchemas.client.update),
     updateClient
   )
   .delete(
+    protect,
     validateParams(Joi.object({ tenantId: objectIdSchema.required(), clientId: objectIdSchema.required() })),
     deleteClient
   );
 
 router.route('/:tenantId/:clientId/resend-invitation')
   .post(
+    protect,
     validateParams(Joi.object({ tenantId: objectIdSchema.required(), clientId: objectIdSchema.required() })),
     resendInvitation
   );
