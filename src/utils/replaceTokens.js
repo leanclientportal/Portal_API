@@ -27,17 +27,24 @@ function replaceTokens(template, data) {
       return value.toISOString().split('T')[0];
     }
 
-    // Allow only primitive values
+    // IMAGE / URL tokens → DO NOT escape
+    if (typeof value === 'string' && isValidUrl(value)) {
+      return value;
+    }
+
+    // Normal text → escape
     if (['string', 'number', 'boolean'].includes(typeof value)) {
       return escapeHtml(String(value));
     }
 
-    // Reject objects/arrays
     return '';
   });
 }
 
-// Prevent XSS / broken HTML
+function isValidUrl(value) {
+  return /^https?:\/\//i.test(value);
+}
+
 function escapeHtml(str) {
   return str
     .replace(/&/g, '&amp;')
@@ -46,6 +53,5 @@ function escapeHtml(str) {
     .replace(/"/g, '&quot;')
     .replace(/'/g, '&#039;');
 }
-
 
 module.exports = { replaceTokens };
