@@ -7,16 +7,21 @@ const config = require('../config');
 exports.protect = asyncHandler(async (req, res, next) => {
     let token;
 
+    // Log all headers for debugging
+    console.log('Request Headers:', req.headers);
+
     if (req.headers.authorization && req.headers.authorization.startsWith('Bearer')) {
         // Set token from Bearer token in header
         token = req.headers.authorization.split(' ')[1];
+        console.log('Extracted Token:', token); // Log the extracted token
     }
 
     // Make sure token exists
     if (!token) {
+        console.log('No token found or token did not start with Bearer');
         return res.status(401).json({
             success: false,
-            message: 'Not authorized to access this route'
+            message: 'Not authorized to access this route: No token provided'
         });
     }
 
@@ -31,18 +36,20 @@ exports.protect = asyncHandler(async (req, res, next) => {
         req.user = await User.findById(decoded.id);
 
         if (!req.user) {
+            console.log('User not found for decoded ID:', decoded.id);
             return res.status(401).json({
                 success: false,
-                message: 'User not found'
+                message: 'Not authorized to access this route: User not found'
             });
         }
 
         req.userId = decoded.id;
         next();
     } catch (err) {
+        console.error('Token verification error:', err.message);
         return res.status(401).json({
             success: false,
-            message: 'Not authorized to access this route'
+            message: `Not authorized to access this route: ${err.message}`
         });
     }
 });
@@ -63,6 +70,7 @@ exports.authorize = (...roles) => {
                 message: `User role '${req.user.activeProfile}' is not authorized to access this route`
             });
         }
+
         next();
     };
 };
