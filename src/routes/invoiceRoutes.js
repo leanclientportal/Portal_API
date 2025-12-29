@@ -17,7 +17,7 @@ const {
 } = require('../middlewares/validation');
 
 // All routes are protected
-// router.use(protect);
+router.use(protect);
 
 const projectParamSchema = Joi.object({
   projectId: objectIdSchema.required()

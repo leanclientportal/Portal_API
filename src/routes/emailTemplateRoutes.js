@@ -7,18 +7,19 @@ const {
   updateEmailTemplate,
   deleteEmailTemplate
 } = require('../controllers/emailTemplateController');
+const { protect } = require('../middlewares/auth');
 
 const router = express.Router();
 
-router.route('/types').get(getEmailTemplateTypes);
+router.route('/types').get(protect, getEmailTemplateTypes);
 
 router.route('/:tenantId')
-  .get(getEmailTemplates)
-  .post(createEmailTemplate);
+  .get(protect, getEmailTemplates)
+  .post(protect, createEmailTemplate);
 
 router.route('/:tenantId/:templateId')
-  .get(getEmailTemplateById)
-  .put(updateEmailTemplate)
-  .delete(deleteEmailTemplate);
+  .get(protect, getEmailTemplateById)
+  .put(protect, updateEmailTemplate)
+  .delete(protect, deleteEmailTemplate);
 
 module.exports = router;

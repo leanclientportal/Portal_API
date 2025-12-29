@@ -7,16 +7,17 @@ const {
   getGeneralSettings,
   updateGeneralSettings,
 } = require('../controllers/tenantSettingsController');
+const { protect } = require('../middlewares/auth');
 
 const router = express.Router();
 
 // Route to get and update SMTP settings
-router.route('/:tenantId/settings/smtp').get(getSmtpSettings).put(updateSmtpSettings);
+router.route('/:tenantId/settings/smtp').get(protect, getSmtpSettings).put(protect, updateSmtpSettings);
 
 // Route to get and update email settings
-router.route('/:tenantId/settings/email').get(getEmailSettings).put(updateEmailSettings);
+router.route('/:tenantId/settings/email').get(protect, getEmailSettings).put(protect, updateEmailSettings);
 
 // Route to get and update general settings
-router.route('/:tenantId/settings/general').get(getGeneralSettings).put(updateGeneralSettings);
+router.route('/:tenantId/settings/general').get(protect, getGeneralSettings).put(protect, updateGeneralSettings);
 
 module.exports = router;

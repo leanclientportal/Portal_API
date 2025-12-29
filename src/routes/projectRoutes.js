@@ -29,24 +29,27 @@ const paramSchemaDetail = Joi.object({
 
 router.route('/:activeProfile/:activeProfileId')
   .post(
+    protect,
     validateQuery(validationSchemas.pagination),
     getProjects
   );
 
 router.route('/:tenantId/:clientId/add')
   .post(
+    protect,
     validateParams(paramSchemaList),
     validate(validationSchemas.project.create),
     createProject
   );
 
 router.route('/:projectId')
-  .get(validateParams(paramSchemaDetail), getProject)
+  .get(protect, validateParams(paramSchemaDetail), getProject)
   .put(
+    protect,
     validateParams(paramSchemaDetail),
     validate(validationSchemas.project.update),
     updateProject
   )
-  .delete(validateParams(paramSchemaDetail), deleteProject);
+  .delete(protect, validateParams(paramSchemaDetail), deleteProject);
 
 module.exports = router;
