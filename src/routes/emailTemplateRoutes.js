@@ -3,6 +3,7 @@ const {
   getEmailTemplateTypes,
   getEmailTemplates,
   getEmailTemplateById,
+  getPreloadEmailTemplate,
   createEmailTemplate,
   updateEmailTemplate,
   deleteEmailTemplate
@@ -16,6 +17,9 @@ router.route('/types').get(protect, getEmailTemplateTypes);
 router.route('/:tenantId')
   .get(protect, getEmailTemplates)
   .post(protect, createEmailTemplate);
+
+router.route('/:tenantId/preload/:templateTypeCode')
+  .get(protect, getPreloadEmailTemplate);
 
 router.route('/:tenantId/:templateId')
   .get(protect, getEmailTemplateById)

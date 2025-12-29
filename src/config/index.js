@@ -27,6 +27,7 @@ module.exports = {
   Client: 'client',
   Tenant: 'tenant',
   Admin: 'admin',
+  AdminId: '693174809b4006d3b4b06fcd',
 
 
   Registation_OTP_Email_Temaplate_Id: 101,

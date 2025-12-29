@@ -2,6 +2,7 @@ const EmailTemplate = require('../models/EmailTemplate');
 const asyncHandler = require('../middlewares/asyncHandler');
 const sendResponse = require('../utils/apiResponse');
 const EmailTemplateType = require('../enums/EmailTemplateType');
+const { getEmailTemplate } = require('../utils/emailUtils');
 
 // @desc    Get all email template types for a dropdown
 // @route   GET /api/v1/email-templates/types
@@ -46,6 +47,20 @@ const getEmailTemplateById = asyncHandler(async (req, res) => {
   }
 
   sendResponse(res, 200, 'Email template retrieved successfully', template);
+});
+
+// @desc    Get a preload email template by type for a tenant (or default if not found)
+// @route   GET /api/v1/email-templates/:tenantId/preload/:templateTypeCode
+// @access  Private
+const getPreloadEmailTemplate = asyncHandler(async (req, res) => {
+  const { tenantId, templateTypeCode } = req.params;
+  const template = await getEmailTemplate(tenantId, parseInt(templateTypeCode));
+
+  if (!template) {
+    return sendResponse(res, 404, 'Preload email template not found', null, false);
+  }
+
+  sendResponse(res, 200, 'Preload email template retrieved successfully', template);
 });
 
 
@@ -115,6 +130,7 @@ module.exports = {
   getEmailTemplateTypes,
   getEmailTemplates,
   getEmailTemplateById,
+  getPreloadEmailTemplate,
   createEmailTemplate,
   updateEmailTemplate,
   deleteEmailTemplate,
