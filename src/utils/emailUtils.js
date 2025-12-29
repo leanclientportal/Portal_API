@@ -6,11 +6,11 @@ const { getTokenData } = require('../services/tokenService');
 const { replaceTokens } = require('./replaceTokens');
 
 const getEmailTemplate = async (tenantId, templateId) => {
-    const emailTemplate = await EmailTemplate.findOne({ tenantId, templateId, isActive: true });
+    let emailTemplate = await EmailTemplate.findOne({ tenantId, templateId, isActive: true });
 
     if (!emailTemplate) {
         console.warn(`Warning: Email template with templateId '${templateId}' not found for tenant ${tenantId}.`);
-        emailTemplate = EmailTemplate.findOne({
+        emailTemplate = await EmailTemplate.findOne({
             templateId,
             isActive: true,
             isDefault: true,
