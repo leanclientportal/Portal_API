@@ -10,7 +10,16 @@ const getEmailTemplate = async (tenantId, templateId) => {
 
     if (!emailTemplate) {
         console.warn(`Warning: Email template with templateId '${templateId}' not found for tenant ${tenantId}.`);
-        emailTemplate = await EmailTemplate.findOne({ tenantId: null, templateId, isActive: true });
+        emailTemplate = EmailTemplate.findOne({
+            templateId,
+            isActive: true,
+            isDefault: true,
+            $or: [
+                { tenantId: null },
+                { "tenantId.$oid": null },
+                { tenantId: { $exists: false } }
+            ]
+        });
     }
 
     return emailTemplate;

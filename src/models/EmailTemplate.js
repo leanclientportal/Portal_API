@@ -5,12 +5,13 @@ const emailTemplateSchema = new mongoose.Schema({
     type: mongoose.Schema.Types.ObjectId,
     ref: 'Tenant',
     required: true,
+    default: null,
     index: true
   },
   templateId: {
     type: Number,
     required: true,
-    trim: true
+    trim: true,
   },
   name: {
     type: String,
