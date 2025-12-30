@@ -38,35 +38,70 @@ const sendOtp = asyncHandler(async (req, res) => {
 
   try {
     let tenantId = null;
+
     if (user && user.activeProfile === 'tenant') {
       tenantId = user.activeProfileId;
+
     } else if (user && user.activeProfile === 'client') {
-      const mapping = await TenantClientMapping.findOne({ clientId: user.activeProfileId });
+      const mapping = await TenantClientMapping.findOne({
+        clientId: user.activeProfileId,
+      });
+
       if (mapping) {
         tenantId = mapping.tenantId;
       }
     }
 
     if (user && user.activeProfile === 'client') {
-      let client = Client.findById(user.activeProfileId);
-      if (client) {
-        if (client.invitationToken)
-          return sendResponse(res, 404, 'Invitation not accepted. Please check your email and accept the invitation to continue.', null, false);
 
-        if (client.isActive === false)
-          return sendResponse(res, 404, 'Account not activated. Please verify your email to activate your account.', null, false);
+      // ✅ FIX: await added
+      const client = await Client.findById(user.activeProfileId);
+
+      if (!client) {
+        return sendResponse(
+          res,
+          404,
+          'User not found. Please register.',
+          null,
+          false
+        );
       }
-      else
-        return sendResponse(res, 404, 'User not found. Please register.', null, false);
+
+      if (client.invitationToken) {
+        return sendResponse(
+          res,
+          403,
+          'Invitation not accepted. Please check your email and accept the invitation to continue.',
+          null,
+          false
+        );
+      }
+
+      if (client.isActive === false) {
+        return sendResponse(
+          res,
+          403,
+          'Account not activated. Please verify your email to activate your account.',
+          null,
+          false
+        );
+      }
     }
 
-    // Use the utility function to send the OTP email
-    await sendLoginOtpEmail(tenantId, email, otp );
+    // ✅ Send OTP only if all validations pass
+    await sendLoginOtpEmail(tenantId, email, otp);
 
   } catch (error) {
     console.error('Error sending OTP email:', error);
-    return sendResponse(res, 500, 'Failed to send OTP email.', null, false);
+    return sendResponse(
+      res,
+      500,
+      'Failed to send OTP email.',
+      null,
+      false
+    );
   }
+
 
   sendResponse(res, 200, 'OTP sent to your email. Please verify to continue.');
 });
