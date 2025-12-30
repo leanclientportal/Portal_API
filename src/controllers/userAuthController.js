@@ -60,7 +60,7 @@ const sendOtp = asyncHandler(async (req, res) => {
       if (!client) {
         return sendResponse(
           res,
-          404,
+          200,
           'User not found. Please register.',
           null,
           false
@@ -70,7 +70,7 @@ const sendOtp = asyncHandler(async (req, res) => {
       if (client.invitationToken) {
         return sendResponse(
           res,
-          403,
+          200,
           'Invitation not accepted. Please check your email and accept the invitation to continue.',
           null,
           false
@@ -80,7 +80,7 @@ const sendOtp = asyncHandler(async (req, res) => {
       if (client.isActive === false) {
         return sendResponse(
           res,
-          403,
+          200,
           'Account not activated. Please verify your email to activate your account.',
           null,
           false
