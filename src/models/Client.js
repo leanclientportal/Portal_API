@@ -28,6 +28,23 @@ const clientSchema = new mongoose.Schema({
   },
   invitationToken: {
     type: String,
+  },
+  generalSetting: {
+    currency: {
+      type: String,
+      default: 'usd'
+    },
+    dateFormat: {
+      type: String,
+       default: 'dd/MM/yyyy'
+    },
+    amountFormat: {
+      type: String,
+      default: '0,0.00'
+    },
+    logoUrl: {
+      type: String
+    }
   }
 }, {
   timestamps: true,

@@ -20,7 +20,7 @@ const taskRoutes = require('./routes/taskRoutes');
 const invoiceRoutes = require('./routes/invoiceRoutes');
 const documentRoutes = require('./routes/documentRoutes');
 const emailTemplateRoutes = require('./routes/emailTemplateRoutes'); // Added email template routes
-const tenantSettingsRoutes = require('./routes/tenantSettingsRoutes');
+const settingsRoutes = require('./routes/settingsRoutes');
 const messageRoutes = require('./routes/messageRoutes');
 const chatRoutes = require('./routes/chatRoutes');
 const dashboardRoutes = require('./routes/dashboardRoutes');
@@ -106,7 +106,7 @@ app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(specs, {
 // Mount routes
 app.use(`${API_VERSION}/auth`, userAuthRoutes);
 app.use(`${API_VERSION}/tenant`, tenantRoutes);
-app.use(`${API_VERSION}/tenant`, tenantSettingsRoutes);
+app.use(`${API_VERSION}/setting`, settingsRoutes);
 app.use(`${API_VERSION}/clients`, clientRoutes);
 app.use(`${API_VERSION}/projects`, projectRoutes);
 app.use(`${API_VERSION}/tasks`, taskRoutes);

@@ -1,6 +1,8 @@
 const Tenant = require('../models/Tenant');
 const asyncHandler = require('../middlewares/asyncHandler');
 const sendResponse = require('../utils/apiResponse');
+const config = require('../config');
+const Client = require('../models/Client');
 
 // @desc    Get SMTP settings for a tenant
 // @route   GET /api/v1/tenant/:tenantId/settings/smtp
@@ -93,46 +95,56 @@ exports.updateEmailSettings = asyncHandler(async (req, res) => {
 });
 
 // @desc    Get general settings for a tenant
-// @route   GET /api/v1/tenant/:tenantId/settings/general
+// @route   GET /api/v1/:activeProfileId/:activeProfile/settings_general
 // @access  Private
 exports.getGeneralSettings = asyncHandler(async (req, res) => {
-  const { tenantId } = req.params;
-
-  const tenant = await Tenant.findById(tenantId).select('generalSetting');
-
-  if (!tenant) {
-    return sendResponse(res, 404, 'Tenant not found', null, false);
+  const { activeProfileId, activeProfile } = req.params;
+  let setting = null;
+  if (activeProfile === config.Tenant) {
+    setting = await Tenant.findById(activeProfileId).select('generalSetting');
+  }
+  else if (activeProfile === config.Client) {
+    setting = await Client.findById(activeProfileId).select('generalSetting');
   }
 
-  sendResponse(res, 200, 'General settings retrieved successfully', tenant.generalSetting);
+  if (!setting) {
+    return sendResponse(res, 404, 'Settings not found', null, false);
+  }
+
+  sendResponse(res, 200, 'General settings retrieved successfully', setting.generalSetting);
 });
 
 // @desc    Update general settings for a tenant
-// @route   PUT /api/v1/tenant/:tenantId/settings/general
+// @route   PUT /api/v1/:activeProfileId/:activeProfile/settings_general
 // @access  Private
 exports.updateGeneralSettings = asyncHandler(async (req, res) => {
-  const { tenantId } = req.params;
+  const { activeProfileId, activeProfile } = req.params;
+
   const generalSetting = req.body;
-
-  const tenant = await Tenant.findById(tenantId);
-
-  if (!tenant) {
-    return sendResponse(res, 404, 'Tenant not found', null, false);
-  }
-
   if (!generalSetting || Object.keys(generalSetting).length === 0) {
     return sendResponse(res, 400, 'General settings are required', null, false);
   }
-
-  const updatedTenant = await Tenant.findByIdAndUpdate(
-    tenantId,
-    { $set: { generalSetting } },
-    { new: true, runValidators: true }
-  );
-
-  if (!updatedTenant) {
-    return sendResponse(res, 404, 'Tenant not found', null, false);
+  let updatedSetting = null;
+  if (activeProfile === config.Tenant) {
+    setting = await Tenant.findById(activeProfileId);
+    updatedSetting = await Tenant.findByIdAndUpdate(
+      activeProfileId,
+      { $set: { generalSetting } },
+      { new: true, runValidators: true }
+    );
+  }
+  else if (activeProfile === config.Client) {
+    setting = await Client.findById(activeProfileId);
+    updatedSetting = await Client.findByIdAndUpdate(
+      activeProfileId,
+      { $set: { generalSetting } },
+      { new: true, runValidators: true }
+    );
   }
 
-  sendResponse(res, 200, 'General settings updated successfully', updatedTenant.generalSetting);
+  if (!updatedSetting) {
+    return sendResponse(res, 404, 'settings not found', null, false);
+  }
+
+  sendResponse(res, 200, 'General settings updated successfully', updatedSetting.generalSetting);
 });

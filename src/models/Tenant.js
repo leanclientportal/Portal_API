@@ -80,11 +80,11 @@ const tenantSchema = new mongoose.Schema({
   generalSetting: {
     currency: {
       type: String,
-      default: 'USD'
+      default: 'usd'
     },
     dateFormat: {
       type: String,
-      default: 'MM/DD/YYYY'
+      default: 'dd/MM/yyyy'
     },
     amountFormat: {
       type: String,
