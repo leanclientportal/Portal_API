@@ -63,7 +63,7 @@ const sendOtp = asyncHandler(async (req, res) => {
           200,
           'User not found. Please register.',
           null,
-          false
+          success = false
         );
       }
 
@@ -73,7 +73,7 @@ const sendOtp = asyncHandler(async (req, res) => {
           200,
           'Invitation not accepted. Please check your email and accept the invitation to continue.',
           null,
-          false
+          success = false
         );
       }
 
@@ -83,7 +83,7 @@ const sendOtp = asyncHandler(async (req, res) => {
           200,
           'Account not activated. Please verify your email to activate your account.',
           null,
-          false
+          success = false
         );
       }
     }
