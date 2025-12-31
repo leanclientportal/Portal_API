@@ -71,17 +71,15 @@ exports.getConversations = asyncHandler(async (req, res, next) => {
         const lastMessage = await Message.findOne(chatQuery).sort({ createdAt: -1 });
         const unreadCount = await Message.countDocuments({ ...chatQuery, read: false, receiverId: activeProfileId });
 
-        if (lastMessage) {
-          conversations.push({
-            id: client._id,
-            name: client.name,
-            profileImageUrl: client.profileImageUrl,
-            lastMessage: lastMessage.message,
-            lastMessageDate: lastMessage.createdAt,
-            unreadCount: unreadCount,
-            type: config.Client
-          })
-        }
+        conversations.push({
+          id: client._id,
+          name: client.name,
+          profileImageUrl: client.profileImageUrl,
+          lastMessage: lastMessage ? lastMessage.message : "",
+          lastMessageDate: lastMessage ? lastMessage.createdAt : "",
+          unreadCount: unreadCount ? unreadCount : 0,
+          type: config.Client
+        })
       }
     }
   } else if (activeProfile === 'client') {
@@ -106,17 +104,15 @@ exports.getConversations = asyncHandler(async (req, res, next) => {
         const lastMessage = await Message.findOne(chatQuery).sort({ createdAt: -1 });
         const unreadCount = await Message.countDocuments({ ...chatQuery, read: false, receiverId: activeProfileId });
 
-        if (lastMessage) {
-          conversations.push({
-            id: tenant._id,
-            name: tenant.companyName,
-            profileImageUrl: tenant.profileImageUrl,
-            lastMessage: lastMessage.message,
-            lastMessageDate: lastMessage.createdAt,
-            unreadCount: unreadCount,
-            type: config.Tenant
-          })
-        }
+        conversations.push({
+          id: tenant._id,
+          name: tenant.companyName,
+          profileImageUrl: tenant.profileImageUrl,
+          lastMessage: lastMessage ? lastMessage.message : "",
+          lastMessageDate: lastMessage ? lastMessage.createdAt : "",
+          unreadCount:  unreadCount ? unreadCount : 0,
+          type: config.Tenant
+        })
       }
     }
   }
