@@ -8,7 +8,7 @@ const ErrorResponse = require('../utils/errorResponse');
 // @access  Public
 exports.getPlans = asyncHandler(async (req, res, next) => {
   const plans = await Plan.find();
-  res.status(200).json({ success: true, data: { plans });
+  res.status(200).json({ success: true, data: { plans }});
 });
 
 // @desc    Create a new plan
