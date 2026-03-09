@@ -1,115 +1,44 @@
+const User = require('../models/User');
 const Plan = require('../models/Plan');
 const asyncHandler = require('../middlewares/asyncHandler');
-const sendResponse = require('../utils/apiResponse');
+const ErrorResponse = require('../utils/errorResponse');
 
 // @desc    Get all plans
-// @route   GET /api/v1/plans
-// @access  Private
-const getPlans = asyncHandler(async (req, res) => {
-  const { page = 1, limit = 20, type, status, isActive } = req.query;
-
-  // Build query
-  const query = {};
-
-  if (type) {
-    query.type = type;
-  }
-
-  if (status) {
-    query.status = status;
-  }
-
-  if (isActive !== undefined) {
-    query.isActive = isActive === 'true';
-  }
-
-  // Execute query with pagination
-  const plans = await Plan.find(query)
-    .sort({ priority: -1, createdAt: -1 })
-    .limit(parseInt(limit))
-    .skip((parseInt(page) - 1) * parseInt(limit));
-
-  const total = await Plan.countDocuments(query);
-
-  const pagination = {
-    current: parseInt(page),
-    total: Math.ceil(total / limit),
-    count: plans.length,
-    totalRecords: total
-  };
-
-  sendResponse(res, 200, 'Plans retrieved successfully', { plans }, pagination);
+// @route   GET /api/plans
+// @access  Public
+exports.getPlans = asyncHandler(async (req, res, next) => {
+  const plans = await Plan.find();
+  res.status(200).json({ success: true, data: plans });
 });
 
-// @desc    Get a single plan by ID
-// @route   GET /api/v1/plans/:planId
+// @desc    Create a new plan
+// @route   POST /api/plans
+// @access  Public
+exports.createPlan = asyncHandler(async (req, res, next) => {
+  const plan = await Plan.create(req.body);
+  res.status(201).json({ success: true, data: plan });
+});
+
+// @desc    Upgrade user plan
+// @route   POST /api/plans/upgrade
 // @access  Private
-const getPlanById = asyncHandler(async (req, res) => {
-  const { planId } = req.params;
+exports.upgradePlan = asyncHandler(async (req, res, next) => {
+  const { userId, planId } = req.body;
+
+  const user = await User.findById(userId);
+
+  if (!user) {
+    return next(new ErrorResponse('User not found', 404));
+  }
 
   const plan = await Plan.findById(planId);
 
   if (!plan) {
-    return sendResponse(res, 404, 'Plan not found', null, false);
+    return next(new ErrorResponse('Plan not found', 404));
   }
 
-  sendResponse(res, 200, 'Plan retrieved successfully', plan);
+  user.plan = plan;
+  await user.save();
+
+  res.status(200).json({ success: true, data: user });
 });
-
-// @desc    Create new plan
-// @route   POST /api/v1/plans
-// @access  Private
-const createPlan = asyncHandler(async (req, res) => {
-  const plan = await Plan.create(req.body);
-
-  sendResponse(res, 201, 'Plan created successfully', plan);
-});
-
-// @desc    Update plan
-// @route   PUT /api/v1/plans/:planId
-// @access  Private
-const updatePlan = asyncHandler(async (req, res) => {
-  const { planId } = req.params;
-
-  const plan = await Plan.findByIdAndUpdate(
-    planId,
-    req.body,
-    {
-      new: true,
-      runValidators: true
-    }
-  );
-
-  if (!plan) {
-    return sendResponse(res, 404, 'Plan not found', null, false);
-  }
-
-  sendResponse(res, 200, 'Plan updated successfully', plan);
-});
-
-// @desc    Delete plan (soft delete)
-// @route   DELETE /api/v1/plans/:planId
-// @access  Private
-const deletePlan = asyncHandler(async (req, res) => {
-  const { planId } = req.params;
-
-  const plan = await Plan.findByIdAndUpdate(
-    planId,
-    { isActive: false },
-    { new: true }
-  );
-
-  if (!plan) {
-    return sendResponse(res, 404, 'Plan not found', null, false);
-  }
-
-  sendResponse(res, 200, 'Plan deleted successfully', {});
-});
-
-module.exports = {
-  getPlans,
-  getPlanById,
-  createPlan,
-  updatePlan,
-  deletePlan
-};

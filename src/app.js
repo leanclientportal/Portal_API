@@ -19,12 +19,14 @@ const projectRoutes = require('./routes/projectRoutes');
 const taskRoutes = require('./routes/taskRoutes');
 const invoiceRoutes = require('./routes/invoiceRoutes');
 const documentRoutes = require('./routes/documentRoutes');
-const emailTemplateRoutes = require('./routes/emailTemplateRoutes'); // Added email template routes
+const emailTemplateRoutes = require('./routes/emailTemplateRoutes');
 const settingsRoutes = require('./routes/settingsRoutes');
 const messageRoutes = require('./routes/messageRoutes');
 const chatRoutes = require('./routes/chatRoutes');
 const dashboardRoutes = require('./routes/dashboardRoutes');
 const tokenGlossaryRoutes = require('./routes/tokenGlossaryRoutes');
+const planRoutes = require('./routes/planRoutes');
+const planUpgradeRequestRoutes = require('./routes/planUpgradeRequestRoutes');
 
 // Swagger documentation
 const { swaggerUi, specs } = require('./config/swagger');
@@ -112,11 +114,13 @@ app.use(`${API_VERSION}/projects`, projectRoutes);
 app.use(`${API_VERSION}/tasks`, taskRoutes);
 app.use(`${API_VERSION}/invoices`, invoiceRoutes);
 app.use(`${API_VERSION}/documents`, documentRoutes);
-app.use(`${API_VERSION}/email-templates`, emailTemplateRoutes); // Added email template routes
+app.use(`${API_VERSION}/email-templates`, emailTemplateRoutes);
 app.use(`${API_VERSION}/messages`, messageRoutes);
 app.use(`${API_VERSION}/chats`, chatRoutes);
 app.use(`${API_VERSION}/dashboard`, dashboardRoutes);
 app.use(`${API_VERSION}/token-glossary`, tokenGlossaryRoutes);
+app.use(`${API_VERSION}/plans`, planRoutes);
+app.use(`${API_VERSION}/plan-upgrade-requests`, planUpgradeRequestRoutes);
 
 // Welcome message
 app.get('/', (req, res) => {
@@ -133,7 +137,7 @@ app.get('/', (req, res) => {
       tasks: `${API_VERSION}/tasks/:tenantId/:clientId/:projectId`,
       invoices: `${API_VERSION}/invoices/:tenantId/:clientId/:projectId`,
       documents: `${API_VERSION}/documents/:clientId/:projectId`,
-      emailTemplates: `${API_VERSION}/email-templates`, // Added email templates endpoint
+      emailTemplates: `${API_VERSION}/email-templates`,
       tokenGlossary: `${API_VERSION}/token-glossary`
     }
   });
@@ -158,7 +162,7 @@ app.all('*', (req, res) => {
       `GET ${API_VERSION}/tasks/:tenantId/:clientId/:projectId`,
       `GET ${API_VERSION}/invoices/:tenantId/:clientId/:projectId`,
       `GET ${API_VERSION}/documents/:clientId/:projectId`,
-      `GET ${API_VERSION}/email-templates`, // Added email templates endpoint
+      `GET ${API_VERSION}/email-templates`,
       `GET ${API_VERSION}/token-glossary`
     ]
   });

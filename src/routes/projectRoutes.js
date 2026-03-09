@@ -7,14 +7,16 @@ const {
   deleteProject
 } = require('../controllers/projectController');
 const { protect } = require('../middlewares/auth');
-const { 
-  validate, 
+const {
+  validate,
   validateQuery,
   validateParams,
-  validationSchemas, 
-  objectIdSchema 
+  validationSchemas,
+  objectIdSchema
 } = require('../middlewares/validation');
 const Joi = require('joi');
+const config = require('../config');
+const checkSubscription = require('../middlewares/checkSubscription');
 
 const router = express.Router();
 
@@ -37,6 +39,7 @@ router.route('/:activeProfile/:activeProfileId')
 router.route('/:tenantId/:clientId/add')
   .post(
     protect,
+    checkSubscription(config.Project_Count), // Then, check if their plan allows project creation
     validateParams(paramSchemaList),
     validate(validationSchemas.project.create),
     createProject
