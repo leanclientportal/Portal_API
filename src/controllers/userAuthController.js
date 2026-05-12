@@ -143,12 +143,15 @@ const verifyOtp = asyncHandler(async (req, res) => {
       profileName = newClient.name;
     }
 
+    var defaultplan = await plan.findOne({ name: config.Free_Plan });
+
     const newUser = new User({
       name,
       email,
       phone,
       activeProfile,
       activeProfileId: profileId,
+      plan: defaultplan
     });
     await newUser.save();
     user = newUser;

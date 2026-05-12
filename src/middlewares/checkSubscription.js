@@ -1,3 +1,4 @@
+const config = require('../config');
 const { getProjectCount } = require('../services/tokenResolvers/project');
 const ErrorResponse = require('../utils/errorResponse');
 const asyncHandler = require('./asyncHandler');
@@ -26,12 +27,32 @@ const checkSubscription = (featureId) => asyncHandler(async (req, res, next) => 
         return next(new ErrorResponse('Your current plan does not grant access to this feature. Please upgrade your plan.', 403));
     }
     else {
-        var getProjectCount = await getProjectCount(req.params.tenantId);
-        if (feature.value < getProjectCount) {
-            return next();
+        if (featureId == config.Project_count) {
+            var getProjectCount = await getProjectCount(req.params.tenantId);
+            if (feature.value < getProjectCount) {
+                return next();
+            }
+            else {
+                return next(new ErrorResponse('Your current plan does not access to this feature. Please upgrade your plan.', 403));
+            }
         }
-        else {
-            return next(new ErrorResponse('Your current plan does not access to this feature. Please upgrade your plan.', 403));
+        if (featureId == config.Client_count) {
+            var getProjectCount = await getClientCount(req.params.tenantId);
+            if (feature.value < getProjectCount) {
+                return next();
+            }
+            else {
+                return next(new ErrorResponse('Your current plan does not access to this feature. Please upgrade your plan.', 403));
+            }
+        }
+        if (featureId == config.Storage_size) {
+            var getProjectCount = await getClientCount(req.params.tenantId);
+            if (feature.value < getProjectCount) {
+                return next();
+            }
+            else {
+                return next(new ErrorResponse('Your current plan does not access to this feature. Please upgrade your plan.', 403));
+            }
         }
     }
     next();

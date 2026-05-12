@@ -44,8 +44,20 @@ module.exports = {
   FrontEnd_Base_Url: 'https://9000-firebase-clientportal-1762332719156.cluster-isls3qj2gbd5qs4jkjqvhahfv6.cloudworkstations.dev',
 
   // Plan_Keys
-  Client_Count: 'CLIENT_COUNT',
-  Project_Count: 'PROJECT_COUNT',
-  Task_Count: 'TASK_COUNT',
-  Document_Count: 'DOCUMENT_COUNT'
+  Free_Plan: 'Free',
+  Starter_Plan: 'Starter',
+  Growth_Plan: 'Growth',
+  Pro_Plan: 'Pro',
+
+  Project_count: 'project_count',
+  Client_count: 'client_count',
+  Storage_size: 'storage_size',
+  Email_notifications: 'email_notifications',
+  Smtp_sender: 'smtp_sender',
+  File_upload: 'file_upload',
+  Invoice_sharing: 'invoice_sharing',
+  Branding: 'branding',
+  Task_list: 'task_list',
+  Team_members: 'team_members',
+  Support: 'support'
 };

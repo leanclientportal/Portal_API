@@ -18,6 +18,8 @@ const {
 } = require('../middlewares/validation');
 const { protect } = require('../middlewares/auth');
 const Joi = require('joi');
+const checkSubscription = require('../middlewares/checkSubscription');
+const config = require('../config');
 
 const router = express.Router();
 
@@ -43,6 +45,8 @@ router.route('/:tenantId')
     protect,
     validateParams(paramSchemaList),
     upload.single('profile'),
+    checkSubscription(),
+    validate('profile'),
     validate(validationSchemas.client.create),
     createClient
   );

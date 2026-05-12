@@ -5,6 +5,12 @@ const featureSchema = new mongoose.Schema({
     type: String,
     required: true,
   },
+  key: {
+    type: String,
+    required: true,
+    unique: true,
+    trim: true,
+  },
   available: {
     type: Boolean,
     required: true,
